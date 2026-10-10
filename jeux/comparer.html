@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plus grand, plus petit</title>
+<link rel="apple-touch-icon" href="../icon.png">
+<link rel="manifest" href="../manifest.json">
+<script src="../score.js"></script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cartable">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F9FF; --line:#D6E2F7; --line2:#B9CCEE; --margin:#EFA0A0;
+  --ink:#1D2A4D; --soft:#5A6788; --card:#FFFFFF;
+  --blue:#2F6FDB; --orange:#F29B30; --green:#2E9E5B; --red:#D9473F; --gold:#F5B800;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#131A2B; --line:#1C2640; --line2:#26345A; --margin:#5A2A33;
+    --ink:#EEF2FF; --soft:#A6B1D1; --card:#1C2540;
+    --blue:#6B9BF0; --orange:#F5AE52; --green:#4CC27E; --red:#F0716A; --gold:#FFCB2E;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131A2B; --line:#1C2640; --line2:#26345A; --margin:#5A2A33;
+  --ink:#EEF2FF; --soft:#A6B1D1; --card:#1C2540;
+  --blue:#6B9BF0; --orange:#F5AE52; --green:#4CC27E; --red:#F0716A; --gold:#FFCB2E;
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{
+  font-family:"Andika","Comic Sans MS",system-ui,sans-serif;
+  color:var(--ink);
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(90deg,transparent 22px,var(--margin) 22px,var(--margin) 24px,transparent 24px),
+    repeating-linear-gradient(0deg,var(--line2) 0 1px,transparent 1px 32px),
+    repeating-linear-gradient(0deg,var(--line) 0 1px,transparent 1px 8px),
+    repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 32px);
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;-webkit-user-select:none;
+}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.screen{display:none;min-height:100%;max-width:520px;margin:0 auto;padding:16px 16px 24px 36px;flex-direction:column}
+.screen.on{display:flex}
+
+/* Accueil */
+.backhub{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--line2);border-radius:14px;padding:10px 14px;font-size:1.05rem;font-weight:700;color:var(--ink);text-decoration:none;min-height:48px}
+h1{font-size:2.1rem;line-height:1.1;margin:18px 0 6px;font-weight:700}
+h1 .lt{color:var(--blue)} h1 .gt{color:var(--orange)}
+.intro{color:var(--soft);font-size:1.05rem;margin:0 0 22px}
+.group{margin-bottom:20px}
+.group h2{font-size:1.15rem;margin:0 0 8px;font-weight:700}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  background:var(--card);border:2px solid var(--line2);border-radius:14px;
+  padding:12px 14px;font-size:1.1rem;min-height:52px;flex:1 1 auto;text-align:left;
+}
+.chip[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 0 0 0 2px var(--blue);font-weight:700}
+.chip small{display:block;color:var(--soft);font-size:.9rem;font-weight:400}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:var(--card);border:2px solid var(--line2);border-radius:14px;padding:12px 14px;width:100%;font-size:1.1rem;text-align:left;margin-bottom:8px}
+.switch{width:52px;height:30px;border-radius:15px;background:var(--line2);position:relative;flex:none;transition:background .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle[aria-pressed="true"] .switch{background:var(--green)}
+.toggle[aria-pressed="true"] .switch::after{transform:translateX(22px)}
+.go{
+  margin-top:auto;background:var(--blue);color:#fff;border:0;border-radius:18px;
+  font-size:1.5rem;font-weight:700;padding:18px;min-height:64px;
+  box-shadow:0 5px 0 color-mix(in srgb,var(--blue) 60%,#000);
+}
+.go:active{transform:translateY(3px);box-shadow:0 2px 0 color-mix(in srgb,var(--blue) 60%,#000)}
+
+/* Jeu */
+.top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.icon{background:var(--card);border:2px solid var(--line2);border-radius:14px;width:48px;height:48px;font-size:1.4rem;flex:none;display:grid;place-items:center}
+.dots{display:flex;gap:5px;flex:1;justify-content:center}
+.dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--line2);background:var(--card)}
+.dot.now{border-color:var(--blue)}
+.dot.ok{background:var(--gold);border-color:var(--gold)}
+.dot.ko{background:var(--line2)}
+.question{display:flex;align-items:center;gap:10px;font-size:1.45rem;font-weight:700;line-height:1.2;min-height:64px;margin-bottom:10px}
+.question span{flex:1}
+.board{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:8px}
+.board.picks{grid-template-columns:1fr 1fr;gap:12px}
+.num{
+  background:var(--card);border:3px solid var(--line2);border-radius:22px;
+  padding:14px 6px 12px;display:flex;flex-direction:column;align-items:center;gap:10px;min-height:150px;
+}
+button.num{box-shadow:0 5px 0 var(--line2)}
+button.num:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line2)}
+.num .n{font-size:clamp(3.4rem,17vw,5rem);font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.num.good{border-color:var(--green);background:color-mix(in srgb,var(--green) 14%,var(--card))}
+.num.bad{border-color:var(--red);animation:shake .4s}
+.slot{
+  align-self:center;width:64px;height:64px;border-radius:16px;border:3px dashed var(--line2);
+  display:grid;place-items:center;font-size:2.6rem;font-weight:700;color:var(--soft);background:var(--card)
+}
+.slot.good{border-style:solid;border-color:var(--green);color:var(--green);animation:pop .35s}
+.slot.bad{border-style:solid;border-color:var(--red);color:var(--red);animation:shake .4s}
+.signs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.sign{
+  background:var(--card);border:3px solid var(--line2);border-radius:18px;font-size:2.8rem;font-weight:700;
+  min-height:76px;box-shadow:0 5px 0 var(--line2)
+}
+.sign:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line2)}
+
+/* Matériel dizaines / unités */
+.blocks{display:flex;gap:8px;align-items:flex-end;justify-content:center;min-height:62px;flex-wrap:wrap}
+.tens{display:flex;gap:3px}
+.ten{width:9px;height:60px;border-radius:2px;background:
+  repeating-linear-gradient(0deg,var(--blue) 0 5px,color-mix(in srgb,var(--blue) 55%,var(--card)) 5px 6px)}
+.units{display:grid;grid-template-columns:repeat(3,9px);gap:3px;align-content:end}
+.unit{width:9px;height:9px;border-radius:2px;background:var(--orange)}
+.legend{font-size:.9rem;color:var(--soft);text-align:center;line-height:1.2}
+.legend b{color:var(--blue)} .legend i{color:var(--orange);font-style:normal;font-weight:700}
+
+.feedback{min-height:96px;margin-top:16px;font-size:1.15rem;line-height:1.4;padding:12px 14px;border-radius:16px;visibility:hidden}
+.feedback.show{visibility:visible}
+.feedback.ok{background:color-mix(in srgb,var(--green) 15%,var(--card));border:2px solid var(--green)}
+.feedback.ko{background:color-mix(in srgb,var(--red) 10%,var(--card));border:2px solid var(--red)}
+.feedback strong{font-size:1.3rem}
+.croc{font-size:.95rem;color:var(--soft);margin-top:6px}
+
+/* Fin */
+.end{align-items:center;text-align:center;justify-content:center;gap:14px}
+.stars{font-size:2.2rem;letter-spacing:2px;line-height:1.3;max-width:300px}
+.end h2{font-size:2rem;margin:0}
+.end p{font-size:1.2rem;color:var(--soft);margin:0 0 10px}
+.end .go{width:100%;margin-top:6px}
+.badge{font-size:1.15rem;font-weight:700;padding:8px 14px;border-radius:14px;background:color-mix(in srgb,var(--gold) 25%,var(--card));border:2px solid var(--gold)}
+.badge:empty{display:none}
+.total{font-size:1.05rem;color:var(--soft)}
+.ghost{background:var(--card);border:2px solid var(--line2);border-radius:18px;font-size:1.2rem;padding:14px;width:100%;min-height:56px}
+
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- Accueil -->
+<section class="screen on" id="home">
+  <a class="backhub" href="../index.html">← Mon cartable</a>
+  <h1>Plus grand <span class="gt">&gt;</span><br>plus petit <span class="lt">&lt;</span></h1>
+  <p class="intro">10 questions pour s'entraîner à comparer les nombres.</p>
+
+  <div class="group">
+    <h2>Le jeu</h2>
+    <div class="choices" id="modes">
+      <button class="chip" data-mode="grand">Le plus grand<small>Touche le plus grand nombre</small></button>
+      <button class="chip" data-mode="petit">Le plus petit<small>Touche le plus petit nombre</small></button>
+      <button class="chip" data-mode="signe">Les signes<small>Choisis &lt;, = ou &gt;</small></button>
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>Les nombres</h2>
+    <div class="choices" id="ranges">
+      <button class="chip" data-max="20">0 à 20</button>
+      <button class="chip" data-max="50">0 à 50</button>
+      <button class="chip" data-max="100">0 à 100</button>
+    </div>
+  </div>
+
+  <div class="group">
+    <button class="toggle" id="tAide"><span>Montrer les dizaines et les unités</span><span class="switch"></span></button>
+    <button class="toggle" id="tSon"><span>Lire les consignes à voix haute</span><span class="switch"></span></button>
+  </div>
+
+  <button class="go" id="start">C'est parti !</button>
+</section>
+
+<!-- Jeu -->
+<section class="screen" id="game">
+  <div class="top">
+    <button class="icon" id="back" aria-label="Retour au menu">⌂</button>
+    <div class="dots" id="dots"></div>
+    <button class="icon" id="say" aria-label="Écouter la consigne">🔊</button>
+  </div>
+  <div class="question"><span id="qText"></span></div>
+  <div id="board"></div>
+  <div id="signs"></div>
+  <div class="feedback" id="fb" aria-live="polite"></div>
+</section>
+
+<!-- Fin -->
+<section class="screen end" id="end">
+  <div class="stars" id="endStars"></div>
+  <h2 id="endTitle"></h2>
+  <p id="endText"></p>
+  <div class="badge" id="endBadge"></div>
+  <div class="total" id="endTotal"></div>
+  <button class="go" id="again">Rejouer</button>
+  <button class="ghost" id="menu">Changer de jeu</button>
+</section>
+
+<script>
+const $ = s => document.querySelector(s);
+const TOTAL = 10;
+let cfg = {mode:"grand", max:20, aide:true, son:true};
+try { Object.assign(cfg, JSON.parse(localStorage.getItem("cmp-cfg") || "{}")); } catch(e){}
+const save = () => { try { localStorage.setItem("cmp-cfg", JSON.stringify(cfg)); } catch(e){} };
+
+let q = 0, results = [], cur = null, tried = false, locked = false;
+
+/* ---------- Accueil ---------- */
+function paintHome(){
+  document.querySelectorAll("#modes .chip").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === cfg.mode));
+  document.querySelectorAll("#ranges .chip").forEach(b => b.setAttribute("aria-pressed", +b.dataset.max === cfg.max));
+  $("#tAide").setAttribute("aria-pressed", cfg.aide);
+  $("#tSon").setAttribute("aria-pressed", cfg.son);
+}
+$("#modes").onclick = e => { const b = e.target.closest(".chip"); if(!b) return; cfg.mode = b.dataset.mode; save(); paintHome(); };
+$("#ranges").onclick = e => { const b = e.target.closest(".chip"); if(!b) return; cfg.max = +b.dataset.max; save(); paintHome(); };
+$("#tAide").onclick = () => { cfg.aide = !cfg.aide; save(); paintHome(); };
+$("#tSon").onclick = () => { cfg.son = !cfg.son; save(); paintHome(); };
+paintHome();
+
+function show(id){ document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id)); window.scrollTo(0,0); }
+
+/* ---------- Voix ---------- */
+let frVoice = null;
+function pickVoice(){
+  if(!("speechSynthesis" in window)) return;
+  const v = speechSynthesis.getVoices();
+  frVoice = v.find(x => /^fr(-|_)FR/i.test(x.lang)) || v.find(x => /^fr/i.test(x.lang)) || null;
+}
+if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(t, force){
+  if(!(cfg.son || force) || !("speechSynthesis" in window)) return;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = "fr-FR"; u.rate = .9; if(frVoice) u.voice = frVoice;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---------- Tirage ---------- */
+const rnd = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+function pair(){
+  const max = cfg.max, r = Math.random();
+  let a, b;
+  if(cfg.mode === "signe" && r < .15){ a = b = rnd(0,max); return [a,b]; }
+  for(let i=0;i<50;i++){
+    if(r < .45){ // même dizaine : il faut regarder les unités
+      const t = rnd(0, Math.floor((max-1)/10));
+      a = t*10 + rnd(0,9); b = t*10 + rnd(0,9);
+    } else if(r < .6 && max > 20){ // chiffres inversés : 36 / 63
+      const d1 = rnd(1,9), d2 = rnd(1,9);
+      a = d1*10+d2; b = d2*10+d1;
+    } else { a = rnd(0,max); b = rnd(0,max); }
+    if(a !== b && a <= max && b <= max) break;
+  }
+  if(a === b || a > max || b > max){ a = rnd(0,max-1); b = a + rnd(1, Math.min(9, max-a)); }
+  return Math.random() < .5 ? [a,b] : [b,a];
+}
+
+/* ---------- Matériel ---------- */
+function blocks(n){
+  const t = Math.floor(n/10), u = n%10;
+  let h = '<div class="blocks"><div class="tens">' + '<div class="ten"></div>'.repeat(t) + '</div>';
+  h += '<div class="units">' + '<div class="unit"></div>'.repeat(u) + '</div></div>';
+  h += `<div class="legend"><b>${t} d</b> &nbsp; <i>${u} u</i></div>`;
+  return h;
+}
+const diz = n => n + (n >= 2 ? " dizaines" : " dizaine");
+const uni = n => n + (n >= 2 ? " unités" : " unité");
+
+function explain(a,b){
+  if(a === b) return `Les deux nombres sont pareils : ${a} = ${b}.`;
+  const big = Math.max(a,b), small = Math.min(a,b);
+  const ta = Math.floor(a/10), tb = Math.floor(b/10);
+  if(ta !== tb)
+    return `${a}, c'est ${diz(ta)}. ${b}, c'est ${diz(tb)}. Donc <strong>${big}</strong> est plus grand que ${small}.`;
+  return `Même nombre de dizaines (${ta}). On regarde les unités : ${uni(a%10)} et ${uni(b%10)}. Donc <strong>${big}</strong> est plus grand que ${small}.`;
+}
+
+/* ---------- Partie ---------- */
+const QTEXT = {grand:"Touche le nombre le plus grand.", petit:"Touche le nombre le plus petit.", signe:"Choisis le bon signe."};
+
+function startGame(){ q = 0; results = []; show("game"); next(); }
+
+function dots(){
+  $("#dots").innerHTML = Array.from({length:TOTAL}, (_,i) =>
+    `<span class="dot ${i < results.length ? (results[i] ? "ok" : "ko") : (i === q ? "now" : "")}"></span>`).join("");
+}
+
+function next(){
+  if(q >= TOTAL) return finish();
+  cur = pair(); tried = false; locked = false;
+  dots();
+  $("#qText").textContent = QTEXT[cfg.mode];
+  const [a,b] = cur;
+  const card = (n,i,btn) => `<${btn?"button":"div"} class="num" data-i="${i}" ${btn?`aria-label="${n}"`:""}><span class="n">${n}</span>${cfg.aide?blocks(n):""}</${btn?"button":"div"}>`;
+  const fb = $("#fb"); fb.className = "feedback"; fb.innerHTML = "";
+  if(cfg.mode === "signe"){
+    $("#board").className = "board";
+    $("#board").innerHTML = card(a,0,false) + '<div class="slot" id="slot">?</div>' + card(b,1,false);
+    $("#signs").className = "signs";
+    $("#signs").innerHTML = ["<","=",">"].map(s => `<button class="sign" data-s="${s}" aria-label="${{"<":"plus petit que","=":"égal à",">":"plus grand que"}[s]}">${s.replace("<","&lt;").replace(">","&gt;")}</button>`).join("");
+  } else {
+    $("#board").className = "board picks";
+    $("#board").innerHTML = card(a,0,true) + card(b,1,true);
+    $("#signs").className = ""; $("#signs").innerHTML = "";
+  }
+  speak(QTEXT[cfg.mode]);
+}
+
+function answer(ok, wrongEl, goodEl){
+  if(locked) return;
+  const fb = $("#fb");
+  if(ok){
+    locked = true;
+    if(!tried) results.push(true); // étoile seulement si juste du premier coup
+    if(goodEl) goodEl.classList.add("good");
+    const cheers = ["Bravo !","Super !","Bien joué !","Excellent !","Oui !"];
+    const c = cheers[rnd(0,cheers.length-1)];
+    fb.className = "feedback show ok";
+    fb.innerHTML = `<strong>${c}</strong> ${tried ? "" : "⭐"}<br>${explain(cur[0],cur[1])}`;
+    speak(c);
+    q++; dots();
+    setTimeout(next, cfg.aide ? 2600 : 1900);
+  } else {
+    if(!tried){ tried = true; results.push(false); dots(); }
+    if(wrongEl){ wrongEl.classList.remove("bad"); void wrongEl.offsetWidth; wrongEl.classList.add("bad"); }
+    fb.className = "feedback show ko";
+    let extra = "";
+    if(cfg.mode === "signe") extra = `<div class="croc">🐊 La bouche du crocodile s'ouvre toujours vers le plus grand nombre.</div>`;
+    fb.innerHTML = `<strong>Pas tout à fait.</strong> Essaie encore !<br>${explain(cur[0],cur[1])}${extra}`;
+    speak("Pas tout à fait. Essaie encore !");
+  }
+}
+
+$("#board").onclick = e => {
+  const el = e.target.closest("button.num"); if(!el) return;
+  const [a,b] = cur, v = el.dataset.i === "0" ? a : b, other = el.dataset.i === "0" ? b : a;
+  const ok = cfg.mode === "grand" ? v > other : v < other;
+  if(ok) answer(true, null, el);
+  else { el.classList.remove("bad"); answer(false, el); }
+};
+$("#signs").onclick = e => {
+  const el = e.target.closest(".sign"); if(!el || locked) return;
+  const [a,b] = cur, s = el.dataset.s;
+  const right = a < b ? "<" : a > b ? ">" : "=";
+  const slot = $("#slot");
+  slot.textContent = s;
+  slot.className = "slot";
+  void slot.offsetWidth;
+  if(s === right){ slot.classList.add("good"); answer(true, null, null); }
+  else { slot.classList.add("bad"); answer(false, null); }
+};
+
+function finish(){
+  const n = results.filter(Boolean).length;
+  $("#endStars").textContent = "⭐".repeat(n) + "☆".repeat(TOTAL-n);
+  const title = n === TOTAL ? "Parfait !" : n >= 8 ? "Bravo !" : n >= 5 ? "Bien joué !" : "Continue, tu progresses !";
+  $("#endTitle").textContent = title;
+  $("#endText").textContent = `${n} étoile${n>1?"s":""} sur ${TOTAL}`;
+  let extra = "";
+  $("#endBadge").textContent = ""; $("#endTotal").textContent = "";
+  if(window.Cartable){
+    const r = Cartable.enregistrer("comparer", n, TOTAL);
+    if(r.nouveauTrophee){ $("#endBadge").textContent = `${r.nouveauTrophee.icone} Nouveau trophée : ${r.nouveauTrophee.nom} !`; extra = ` Tu gagnes le trophée ${r.nouveauTrophee.nom} !`; }
+    else if(r.record){ $("#endBadge").textContent = "🎉 Nouveau record !"; extra = " Nouveau record !"; }
+    else $("#endBadge").textContent = `Ton record : ${r.meilleur} sur ${TOTAL}`;
+    $("#endTotal").textContent = `Tu as ${r.totalEtoiles} étoiles dans ton cartable.`;
+  }
+  show("end");
+  speak(`${title} ${n} étoile${n>1?"s":""} sur ${TOTAL}.${extra}`);
+}
+
+$("#start").onclick = startGame;
+$("#again").onclick = startGame;
+$("#menu").onclick = () => { paintHome(); show("home"); };
+$("#back").onclick = () => { if("speechSynthesis" in window) speechSynthesis.cancel(); paintHome(); show("home"); };
+$("#say").onclick = () => speak(QTEXT[cfg.mode], true);
+</script>
+</body>
+</html>
