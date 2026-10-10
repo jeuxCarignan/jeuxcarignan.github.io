@@ -27,6 +27,8 @@ const PRENOM = "";
 // Couleurs possibles : bleu, orange, vert, rose, violet
 const JEUX = [
   { id: "comparer", titre: "Plus grand, plus petit", texte: "Comparer les nombres de 0 à 100", fichier: "jeux/comparer.html", emoji: "🐊", matiere: "Nombres", couleur: "bleu" },
+  { id: "bdpq", titre: "b, d, p, q", texte: "Ne plus confondre ces lettres", fichier: "jeux/bdpq.html", emoji: "🔤", matiere: "Lecture", couleur: "orange" },
+  { id: "cg", titre: "c et g", texte: "ke ou se ? gue ou je ?", fichier: "jeux/cg.html", emoji: "🦒", matiere: "Lecture", couleur: "vert" },
 ];
 </script>
 <style>
@@ -80,7 +82,7 @@ h2{font-size:1.25rem;margin:26px 0 10px}
 .tile:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 .tile .e{font-size:2.6rem;width:58px;height:58px;flex:none;display:grid;place-items:center;
   border-radius:16px;background:color-mix(in srgb,var(--c) 16%,var(--card))}
-.tile b{display:block;font-size:1.3rem;line-height:1.15}
+.tile b{display:block;color:var(--ink);font-size:1.3rem;line-height:1.15}
 .tile em{font-style:normal}
 .tile span{display:block;color:var(--soft);font-size:.98rem;margin-top:3px;line-height:1.25}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -99,7 +101,11 @@ if (PRENOM) document.title = "Cartable de " + PRENOM;
 
 const DATA = window.Cartable ? Cartable.lire() : { jeux: {} };
 function recordDe(j){
-  const r = j.id && DATA.jeux[j.id];
+  // la note du jeu, ou celle de sa variante jouée le plus récemment (ex. « bdpq-mot-bd »)
+  if(!j.id) return "";
+  const r = Object.entries(DATA.jeux)
+    .filter(([k]) => k === j.id || k.startsWith(j.id + "-"))
+    .map(([,v]) => v).sort((a,b) => (b.date||"").localeCompare(a.date||""))[0];
   return r ? `<em class="rec">Dernière note ${r.note}/${r.total}, meilleure ${r.meilleure}/${r.total}</em>` : "";
 }
 document.getElementById("reset").onclick = () => {
