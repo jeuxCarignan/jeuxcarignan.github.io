@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Le chemin des calculs</title>
+<link rel="apple-touch-icon" href="../icon.png">
+<link rel="manifest" href="../manifest.json">
+<script src="../score.js"></script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cartable">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F9FF; --line:#D6E2F7; --line2:#B9CCEE; --margin:#EFA0A0;
+  --ink:#1D2A4D; --soft:#5A6788; --card:#FFFFFF;
+  --blue:#2F6FDB; --orange:#F29B30; --green:#2E9E5B; --red:#D9473F;
+  --grass:#7CC56B; --grass2:#68B358; --path:#EBD7AE; --path2:#DCC496;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#131A2B; --line:#1C2640; --line2:#26345A; --margin:#5A2A33;
+    --ink:#EEF2FF; --soft:#A6B1D1; --card:#1C2540;
+    --blue:#6B9BF0; --orange:#F5AE52; --green:#4CC27E; --red:#F0716A;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131A2B; --line:#1C2640; --line2:#26345A; --margin:#5A2A33;
+  --ink:#EEF2FF; --soft:#A6B1D1; --card:#1C2540;
+  --blue:#6B9BF0; --orange:#F5AE52; --green:#4CC27E; --red:#F0716A;
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0;overscroll-behavior:none}
+body{
+  font-family:"Andika","Comic Sans MS",system-ui,sans-serif;color:var(--ink);
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(90deg,transparent 22px,var(--margin) 22px,var(--margin) 24px,transparent 24px),
+    repeating-linear-gradient(0deg,var(--line2) 0 1px,transparent 1px 32px),
+    repeating-linear-gradient(0deg,var(--line) 0 1px,transparent 1px 8px),
+    repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 32px);
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;
+}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.screen{display:none;min-height:100%;max-width:520px;margin:0 auto;padding:16px 16px 24px 36px;flex-direction:column}
+.screen.on{display:flex}
+
+/* Accueil */
+.backhub{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--line2);border-radius:14px;padding:10px 14px;font-size:1.05rem;font-weight:700;color:var(--ink);text-decoration:none;min-height:48px}
+.hero{display:flex;align-items:center;gap:12px;margin:16px 0 6px}
+.hero svg{width:72px;height:72px;flex:none}
+h1{font-size:2.1rem;line-height:1.1;margin:0}
+.intro{color:var(--soft);font-size:1.05rem;margin:0 0 20px;line-height:1.4}
+.group{margin-bottom:18px}
+.group h2{font-size:1.15rem;margin:0 0 8px}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--card);border:2px solid var(--line2);border-radius:14px;padding:12px 14px;font-size:1.1rem;min-height:52px;flex:1 1 auto;text-align:left}
+.chip[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 0 0 0 2px var(--blue);font-weight:700}
+.chip small{display:block;color:var(--soft);font-size:.9rem;font-weight:400}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card);border:2px solid var(--line2);border-radius:14px;padding:12px 14px;width:100%;font-size:1.1rem;text-align:left;margin-bottom:8px}
+.switch{width:52px;height:30px;border-radius:15px;background:var(--line2);position:relative;flex:none;transition:background .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle[aria-pressed="true"] .switch{background:var(--green)}
+.toggle[aria-pressed="true"] .switch::after{transform:translateX(22px)}
+.go{margin-top:auto;background:var(--blue);color:#fff;border:0;border-radius:18px;font-size:1.5rem;font-weight:700;padding:18px;min-height:64px;box-shadow:0 5px 0 color-mix(in srgb,var(--blue) 60%,#000)}
+.go:active{transform:translateY(3px);box-shadow:0 2px 0 color-mix(in srgb,var(--blue) 60%,#000)}
+.ghost{background:var(--card);border:2px solid var(--line2);border-radius:18px;font-size:1.2rem;padding:14px;width:100%;min-height:56px}
+
+/* Jeu */
+#game{height:100%;min-height:0;padding:10px 12px 12px;overflow:hidden}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.icon{background:var(--card);border:2px solid var(--line2);border-radius:14px;width:48px;height:48px;font-size:1.4rem;flex:none;display:grid;place-items:center}
+.hearts{font-size:1.7rem;letter-spacing:2px;flex:1}
+.hearts .lost{filter:grayscale(1);opacity:.35}
+.hearts .pop{display:inline-block;animation:pop .5s}
+.count{font-size:1.2rem;font-weight:700;background:var(--card);border:2px solid var(--line2);border-radius:14px;padding:8px 12px}
+.op{background:var(--card);border:3px solid var(--ink);border-radius:18px;text-align:center;font-size:clamp(2.4rem,11vw,3.2rem);font-weight:700;line-height:1;padding:10px 6px;margin-bottom:8px;min-height:68px}
+.field{position:relative;flex:1;min-height:0;border-radius:22px;overflow:hidden;touch-action:none;
+  background:
+    repeating-linear-gradient(180deg,transparent 0 46px,rgba(0,0,0,.06) 46px 52px),
+    linear-gradient(90deg,var(--grass) 0 3%,var(--path) 3% 30%,var(--grass) 30% 36.5%,var(--path) 36.5% 63.5%,var(--grass) 63.5% 70%,var(--path) 70% 97%,var(--grass) 97%);
+  border:3px solid var(--grass2)}
+.gate{position:absolute;left:0;right:0;height:80px;display:grid;grid-template-columns:repeat(3,1fr);gap:0;will-change:transform}
+.sign{margin:0 10%;display:grid;place-items:center;background:#FFF8E7;color:#1D2A4D;border:4px solid #8A5A2B;border-radius:16px;font-size:2.4rem;font-weight:700;box-shadow:0 5px 0 #6B4320}
+.sign.good{background:#D8F5DF;border-color:var(--green)}
+.sign.bad{background:#FBDAD8;border-color:var(--red)}
+.bug{position:absolute;width:70px;height:70px;margin-left:-35px;will-change:transform;pointer-events:none}
+.bug.hit{animation:hit .45s}
+.flower{position:absolute;font-size:1.1rem;pointer-events:none}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;font-size:3.6rem;font-weight:700;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.35);pointer-events:none;text-align:center;line-height:1.1}
+.hint{position:absolute;left:0;right:0;bottom:8px;text-align:center;color:#1D2A4D;font-size:1rem;font-weight:700;opacity:.75;pointer-events:none}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.6)}100%{transform:scale(1)}}
+@keyframes hit{20%,60%{transform:translateX(-8px) rotate(-8deg)}40%,80%{transform:translateX(8px) rotate(8deg)}}
+
+/* Fin */
+.end{align-items:center;text-align:center;gap:12px;padding-top:28px}
+.note{font-size:clamp(4rem,22vw,6rem);font-weight:700;line-height:1;color:var(--blue)}
+.note small{font-size:.45em;color:var(--soft)}
+.end h2{font-size:2rem;margin:0}
+.end p{font-size:1.15rem;color:var(--soft);margin:0}
+.review{width:100%;text-align:left;display:flex;flex-direction:column;gap:10px;margin:6px 0}
+.review h3{font-size:1.25rem;margin:8px 0 0}
+.err{background:var(--card);border:2px solid var(--line2);border-left:6px solid var(--red);border-radius:14px;padding:12px 14px;font-size:1.05rem;line-height:1.45}
+.err .head{font-size:2rem;font-weight:700;margin-bottom:4px}
+.dotsrow{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:8px 0;font-size:1.3rem;font-weight:700}
+.dotsrow i{width:16px;height:16px;border-radius:50%;display:inline-block}
+.dotsrow .a{background:var(--blue)} .dotsrow .b{background:var(--orange)}
+.dotsrow .x{background:var(--line2);position:relative}
+.dotsrow .x::after{content:"✕";position:absolute;inset:-4px 0 0;color:var(--red);font-size:16px;font-style:normal;text-align:center}
+.ok{color:var(--green);font-weight:700}
+.no{color:var(--red);font-weight:700}
+.tip{background:color-mix(in srgb,var(--blue) 10%,var(--card));border:2px solid var(--blue);border-radius:14px;padding:12px 14px;font-size:1.05rem;line-height:1.45}
+.tip p{margin:6px 0 0;color:var(--ink);font-size:1.05rem}
+.perfect{font-size:1.2rem}
+.end .go{width:100%;margin-top:6px}
+@media (prefers-reduced-motion:reduce){.bug.hit,.hearts .pop{animation:none}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="coco" viewBox="0 0 64 64">
+    <line x1="27" y1="10" x2="20" y2="1" stroke="#1D1D1D" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="37" y1="10" x2="44" y2="1" stroke="#1D1D1D" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="20" cy="1.5" r="2.5" fill="#1D1D1D"/><circle cx="44" cy="1.5" r="2.5" fill="#1D1D1D"/>
+    <ellipse cx="32" cy="39" rx="23" ry="23" fill="#E53935" stroke="#1D1D1D" stroke-width="2.5"/>
+    <line x1="32" y1="18" x2="32" y2="62" stroke="#1D1D1D" stroke-width="2.5"/>
+    <circle cx="21" cy="32" r="4.5" fill="#1D1D1D"/><circle cx="43" cy="32" r="4.5" fill="#1D1D1D"/>
+    <circle cx="20" cy="47" r="4" fill="#1D1D1D"/><circle cx="44" cy="47" r="4" fill="#1D1D1D"/>
+    <circle cx="32" cy="16" r="11" fill="#1D1D1D"/>
+    <circle cx="27.5" cy="13.5" r="3.6" fill="#fff"/><circle cx="36.5" cy="13.5" r="3.6" fill="#fff"/>
+    <circle cx="28" cy="12.5" r="1.7" fill="#1D1D1D"/><circle cx="37" cy="12.5" r="1.7" fill="#1D1D1D"/>
+    <path d="M28 19 q4 3 8 0" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<section class="screen on" id="home">
+  <a class="backhub" href="../index.html">← Mon cartable</a>
+  <div class="hero"><svg aria-hidden="true"><use href="#coco"/></svg><h1>Le chemin des calculs</h1></div>
+  <p class="intro">Glisse ton doigt pour guider Coco la coccinelle sur le chemin du bon résultat. Tu as 2 vies : à la 3<sup>e</sup> erreur, c'est perdu.</p>
+  <div class="group">
+    <h2>La vitesse</h2>
+    <div class="choices" id="levels">
+      <button class="chip" data-level="1">🐌 Niveau 1<small>Lent</small></button>
+      <button class="chip" data-level="2">🐇 Niveau 2<small>Moyen</small></button>
+      <button class="chip" data-level="3">🚀 Niveau 3<small>Rapide</small></button>
+    </div>
+  </div>
+  <div class="group">
+    <h2>Les calculs</h2>
+    <div class="choices" id="ops">
+      <button class="chip" data-ops="add">Additions</button>
+      <button class="chip" data-ops="sub">Soustractions</button>
+      <button class="chip" data-ops="mix">Les deux</button>
+    </div>
+  </div>
+  <div class="group">
+    <button class="toggle" id="tSon"><span>Lire les calculs à voix haute</span><span class="switch"></span></button>
+  </div>
+  <button class="go" id="start">C'est parti !</button>
+</section>
+
+<section class="screen" id="game">
+  <div class="top">
+    <button class="icon" id="back" aria-label="Arrêter et revenir au menu">⌂</button>
+    <div class="hearts" id="hearts" aria-label="Vies"></div>
+    <div class="count" id="count"></div>
+  </div>
+  <div class="op" id="op" aria-live="polite"></div>
+  <div class="field" id="field">
+    <div class="gate" id="gate"></div>
+    <svg class="bug" id="bug" aria-label="Coco la coccinelle"><use href="#coco"/></svg>
+    <div class="hint" id="hint">Glisse ton doigt ← →</div>
+    <div class="overlay" id="overlay"></div>
+  </div>
+</section>
+
+<section class="screen end" id="end">
+  <div class="note"><span id="noteN"></span><small> / <span id="noteT"></span></small></div>
+  <h2 id="endTitle"></h2>
+  <p id="endText"></p>
+  <div class="review" id="review"></div>
+  <button class="go" id="redo">Refaire mes erreurs</button>
+  <button class="go" id="again">Rejouer</button>
+  <button class="ghost" id="menu">Changer de jeu</button>
+</section>
+
+<script>
+const $ = s => document.querySelector(s);
+const TOTAL = 10, VIES = 2, ID = "chemin";
+/* Temps (en secondes) que met un panneau pour descendre jusqu'à Coco */
+const TRAJET = {1: 10, 2: 6.5, 3: 4};
+let cfg = {level:1, ops:"add", son:true};
+try { Object.assign(cfg, JSON.parse(localStorage.getItem("chemin-cfg") || "{}")); } catch(e){}
+const save = () => { try { localStorage.setItem("chemin-cfg", JSON.stringify(cfg)); } catch(e){} };
+
+/* ---------- Accueil ---------- */
+function paintHome(){
+  document.querySelectorAll("#levels .chip").forEach(b => b.setAttribute("aria-pressed", +b.dataset.level === cfg.level));
+  document.querySelectorAll("#ops .chip").forEach(b => b.setAttribute("aria-pressed", b.dataset.ops === cfg.ops));
+  $("#tSon").setAttribute("aria-pressed", cfg.son);
+}
+$("#levels").onclick = e => { const b = e.target.closest(".chip"); if(!b) return; cfg.level = +b.dataset.level; save(); paintHome(); };
+$("#ops").onclick = e => { const b = e.target.closest(".chip"); if(!b) return; cfg.ops = b.dataset.ops; save(); paintHome(); };
+$("#tSon").onclick = () => { cfg.son = !cfg.son; save(); paintHome(); };
+paintHome();
+function show(id){ document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id)); window.scrollTo(0,0); }
+
+/* ---------- Voix ---------- */
+let frVoice = null;
+function pickVoice(){ if(!("speechSynthesis" in window)) return; const v = speechSynthesis.getVoices(); frVoice = v.find(x => /^fr(-|_)FR/i.test(x.lang)) || v.find(x => /^fr/i.test(x.lang)) || null; }
+if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(t){
+  if(!cfg.son || !("speechSynthesis" in window)) return;
+  try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = "fr-FR"; u.rate = .95; if(frVoice) u.voice = frVoice; speechSynthesis.speak(u); }catch(e){}
+}
+
+/* ---------- Calculs ---------- */
+const rnd = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j = rnd(0,i); [a[i],a[j]] = [a[j],a[i]]; } return a; };
+function newOp(){
+  const type = cfg.ops === "mix" ? (Math.random() < .5 ? "add" : "sub") : cfg.ops;
+  let a, b, r;
+  if(type === "add"){ a = rnd(1,9); b = rnd(1, 10-a); r = a + b; }
+  else { a = rnd(2,10); b = rnd(1, a-1); r = a - b; }
+  return {type, a, b, r};
+}
+function choicesFor(op){
+  const cands = [op.r-1, op.r+1, op.r-2, op.r+2, op.type === "add" ? op.a-op.b : op.a+op.b]
+    .filter(x => x >= 0 && x <= 20 && x !== op.r);
+  const uniq = shuffle([...new Set(cands)]).slice(0,2);
+  return shuffle([op.r, ...uniq]);
+}
+const texte = op => `${op.a} ${op.type === "add" ? "+" : "−"} ${op.b}`;
+const oral = op => `${op.a} ${op.type === "add" ? "plus" : "moins"} ${op.b}`;
+
+/* ---------- Partie ---------- */
+const field = $("#field"), gateEl = $("#gate"), bug = $("#bug");
+let W = 0, H = 0, bugX = 0, targetX = 0, bugY = 0;
+let running = false, raf = 0, lastT = 0, scroll = 0;
+let gate = null, done = 0, vies = VIES, results = [], errors = [], queue = null, total = TOTAL;
+
+function measure(){ const r = field.getBoundingClientRect(); W = r.width; H = r.height; bugY = H - 110; }
+const laneOf = x => Math.max(0, Math.min(2, Math.floor(x / (W/3))));
+const laneX = l => (l + .5) * W / 3;
+
+function paintHearts(lostNow){
+  $("#hearts").innerHTML = Array.from({length:VIES}, (_,i) => {
+    const alive = i < vies;
+    return `<span class="${alive ? "" : "lost"} ${lostNow && i === vies ? "pop" : ""}">❤️</span>`;
+  }).join("");
+}
+function paintCount(){ $("#count").textContent = `${Math.min(done+1,total)} / ${total}`; }
+
+function startGame(list){
+  queue = Array.isArray(list) ? list.map(e => ({type:e.op.type, a:e.op.a, b:e.op.b, r:e.op.r})) : null;
+  total = queue ? queue.length : TOTAL;
+  done = 0; vies = VIES; results = []; errors = []; gate = null;
+  show("game"); measure();
+  bugX = targetX = laneX(1);
+  paintHearts(false); paintCount();
+  $("#op").textContent = "";
+  gateEl.innerHTML = ""; gateEl.style.transform = "translateY(-200px)";
+  placeBug();
+  $("#hint").style.display = "";
+  countdown(() => { running = true; lastT = 0; spawn(); raf = requestAnimationFrame(loop); });
+}
+function countdown(cb){
+  const steps = ["3","2","1","Partez !"]; let i = 0;
+  const ov = $("#overlay");
+  const tick = () => {
+    if(!$("#game").classList.contains("on")) return;
+    if(i < steps.length){ ov.textContent = steps[i++]; setTimeout(tick, 650); }
+    else { ov.textContent = ""; cb(); }
+  };
+  tick();
+}
+function spawn(){
+  const op = queue ? queue[done] : newOp();
+  const choices = choicesFor(op);
+  gate = {op, choices, y: -90, judged:false, startLane: laneOf(bugX), moved:false};
+  gateEl.innerHTML = choices.map(c => `<div class="sign">${c}</div>`).join("");
+  $("#op").textContent = `${texte(op)} = ?`;
+  speak(oral(op));
+}
+function placeBug(){ bug.style.transform = `translate(${bugX}px, ${bugY - 35}px)`; }
+
+function loop(t){
+  if(!running) return;
+  if(!lastT) lastT = t;
+  const dt = Math.min(.05, (t - lastT) / 1000); lastT = t;
+  const speed = (bugY + 90) / TRAJET[cfg.level];
+  // décor qui défile
+  scroll = (scroll + speed * dt) % 52;
+  field.style.backgroundPosition = `0 ${scroll}px, 0 0`;
+  // Coco suit le doigt
+  bugX += (targetX - bugX) * Math.min(1, dt * 14);
+  placeBug();
+  if(gate){
+    gate.y += speed * dt;
+    gateEl.style.transform = `translateY(${gate.y}px)`;
+    if(laneOf(bugX) !== gate.startLane) gate.moved = true;
+    if(!gate.judged && gate.y + 40 >= bugY - 20) judge();
+    if(gate.judged && gate.y > H + 10){
+      gate = null;
+      if(vies < 0 || done >= total) return finish();
+      paintCount(); spawn();
+    }
+  }
+  raf = requestAnimationFrame(loop);
+}
+function judge(){
+  gate.judged = true;
+  const lane = laneOf(bugX), pris = gate.choices[lane], ok = pris === gate.op.r;
+  const sign = gateEl.children[lane];
+  results.push(ok); done++;
+  if(ok){ sign.classList.add("good"); }
+  else {
+    sign.classList.add("bad");
+    errors.push({op:gate.op, pris, lent: !gate.moved && lane === gate.startLane});
+    vies--;
+    bug.classList.remove("hit"); void bug.getBoundingClientRect(); bug.classList.add("hit");
+    if(vies >= 0) paintHearts(true);
+    if(vies < 0){
+      running = false;
+      $("#overlay").textContent = "Perdu !";
+      setTimeout(finish, 1100);
+    }
+  }
+}
+
+/* Le doigt (ou la souris) dirige Coco */
+function pointer(e){
+  const r = field.getBoundingClientRect();
+  targetX = Math.max(20, Math.min(W - 20, e.clientX - r.left));
+  $("#hint").style.display = "none";
+}
+let appui = false;
+field.addEventListener("pointerdown", e => { appui = true; try{ field.setPointerCapture(e.pointerId); }catch(_){} pointer(e); });
+field.addEventListener("pointermove", e => { if(appui || e.pointerType === "mouse") pointer(e); });
+["pointerup","pointercancel"].forEach(t => field.addEventListener(t, () => appui = false));
+document.addEventListener("keydown", e => {
+  if(!running) return;
+  if(e.key === "ArrowLeft")  targetX = laneX(Math.max(0, laneOf(targetX) - 1));
+  if(e.key === "ArrowRight") targetX = laneX(Math.min(2, laneOf(targetX) + 1));
+});
+window.addEventListener("resize", () => { if($("#game").classList.contains("on")) measure(); });
+document.addEventListener("visibilitychange", () => {
+  if(document.hidden){ if(running){ running = false; cancelAnimationFrame(raf); $("#overlay").textContent = "Pause"; } }
+  else if(gate && $("#game").classList.contains("on") && vies >= 0 && !running){
+    $("#overlay").textContent = ""; running = true; lastT = 0; raf = requestAnimationFrame(loop);
+  }
+});
+function stop(){ running = false; cancelAnimationFrame(raf); $("#overlay").textContent = ""; if("speechSynthesis" in window) speechSynthesis.cancel(); }
+
+/* ---------- Fin de partie ---------- */
+function points(op){
+  if(op.type === "add")
+    return `<div class="dotsrow">${'<i class="a"></i>'.repeat(op.a)} + ${'<i class="b"></i>'.repeat(op.b)} = ${op.r}</div>`;
+  return `<div class="dotsrow">${'<i class="a"></i>'.repeat(op.r)}${'<i class="x"></i>'.repeat(op.b)} &nbsp;→ il en reste ${op.r}</div>`;
+}
+function pourquoi(op){
+  if(op.type === "add"){
+    const g = Math.max(op.a, op.b), p = Math.min(op.a, op.b);
+    const suite = Array.from({length:p}, (_,i) => g+i+1).join(", ");
+    return `Pars de ${g} et avance de ${p} : ${g}… ${suite}.`;
+  }
+  const suite = Array.from({length:op.b}, (_,i) => op.a-i-1).join(", ");
+  return `Pars de ${op.a} et recule de ${op.b} : ${op.a}… ${suite}.`;
+}
+function errorCard(e){
+  const op = e.op;
+  const quoi = e.lent ? `Coco n'a pas changé de chemin à temps (elle est passée par ${e.pris}).`
+                      : `Tu as pris le chemin <span class="no">${e.pris}</span>.`;
+  return `<div class="err"><div class="head">${texte(op)} = <span class="ok">${op.r}</span></div>
+    ${quoi}${points(op)}${pourquoi(op)}</div>`;
+}
+function conseil(){
+  const t = [];
+  if(errors.some(e => !e.lent && e.op.type === "add")) t.push("Pour une <strong>addition</strong>, garde le plus grand nombre dans ta tête et compte la suite sur tes doigts.");
+  if(errors.some(e => !e.lent && e.op.type === "sub")) t.push("Pour une <strong>soustraction</strong>, pars du premier nombre et recule sur tes doigts.");
+  if(errors.some(e => e.lent)) t.push(cfg.level > 1
+    ? "Tu as manqué de temps : entraîne-toi au niveau plus lent, puis accélère."
+    : "Tu as manqué de temps : calcule dès que le panneau apparaît, puis glisse ton doigt.");
+  return t.length ? `<div class="tip"><strong>Pour progresser :</strong>${t.map(x => `<p>${x}</p>`).join("")}</div>` : "";
+}
+function finish(){
+  stop();
+  const perdu = vies < 0;
+  const n = results.filter(Boolean).length, ratio = n / total;
+  $("#noteN").textContent = n; $("#noteT").textContent = total;
+  const title = perdu ? "Perdu… Coco n'a plus de vie !"
+    : ratio === 1 ? "Parfait, Coco est arrivée !" : "Bravo, Coco est arrivée !";
+  $("#endTitle").textContent = title;
+  let txt = perdu ? `Tu as réussi ${n} calcul${n>1?"s":""} avant de perdre. Recommence !` : "";
+  if(!queue && window.Cartable){
+    const r = Cartable.enregistrer(`${ID}-${cfg.level}-${cfg.ops}`, n, TOTAL); // une note par vitesse et par type de calcul
+    if(!perdu && r.precedente !== null)
+      txt = n > r.precedente ? `Tu progresses : ${r.precedente} / ${TOTAL} la dernière fois.`
+          : n === r.precedente ? `Comme la dernière fois (${r.precedente} / ${TOTAL}).`
+          : `La dernière fois : ${r.precedente} / ${TOTAL}. Tu vas y arriver !`;
+  } else if(queue && !perdu) txt = `Tu as corrigé ${n} erreur${n>1?"s":""} sur ${total}.`;
+  $("#endText").textContent = txt;
+  if(errors.length){
+    $("#review").innerHTML = `<h3>Tes erreurs</h3>` + errors.map(errorCard).join("") + conseil();
+    $("#redo").style.display = "";
+  } else {
+    $("#review").innerHTML = `<p class="perfect">Aucune erreur, bravo ! 🎉</p>`;
+    $("#redo").style.display = "none";
+  }
+  $("#again").textContent = perdu ? "Recommencer" : "Rejouer";
+  $("#again").className = (errors.length && !perdu) ? "ghost" : "go";
+  show("end");
+  speak(perdu ? "Perdu ! Recommence." : `${title} ${n} sur ${total}.`);
+}
+
+$("#start").onclick = () => startGame();
+$("#again").onclick = () => startGame();
+$("#redo").onclick = () => startGame(errors.slice());
+$("#menu").onclick = () => { paintHome(); show("home"); };
+$("#back").onclick = () => { stop(); gate = null; paintHome(); show("home"); };
+</script>
+</body>
+</html>
