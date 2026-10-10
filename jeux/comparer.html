@@ -85,8 +85,9 @@ h1 .lt{color:var(--blue)} h1 .gt{color:var(--orange)}
 .dots{display:flex;gap:5px;flex:1;justify-content:center}
 .dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--line2);background:var(--card)}
 .dot.now{border-color:var(--blue)}
-.dot.ok{background:var(--gold);border-color:var(--gold)}
-.dot.ko{background:var(--line2)}
+.dot.done{background:var(--blue);border-color:var(--blue)}
+.num.picked{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 12%,var(--card))}
+.slot.picked{border-style:solid;border-color:var(--blue);color:var(--blue);animation:pop .3s}
 .question{display:flex;align-items:center;gap:10px;font-size:1.45rem;font-weight:700;line-height:1.2;min-height:64px;margin-bottom:10px}
 .question span{flex:1}
 .board{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:8px}
@@ -123,22 +124,24 @@ button.num:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line2)}
 .legend{font-size:.9rem;color:var(--soft);text-align:center;line-height:1.2}
 .legend b{color:var(--blue)} .legend i{color:var(--orange);font-style:normal;font-weight:700}
 
-.feedback{min-height:96px;margin-top:16px;font-size:1.15rem;line-height:1.4;padding:12px 14px;border-radius:16px;visibility:hidden}
-.feedback.show{visibility:visible}
-.feedback.ok{background:color-mix(in srgb,var(--green) 15%,var(--card));border:2px solid var(--green)}
-.feedback.ko{background:color-mix(in srgb,var(--red) 10%,var(--card));border:2px solid var(--red)}
-.feedback strong{font-size:1.3rem}
 .croc{font-size:.95rem;color:var(--soft);margin-top:6px}
 
 /* Fin */
-.end{align-items:center;text-align:center;justify-content:center;gap:14px}
+.end{align-items:center;text-align:center;gap:12px;padding-top:28px}
+.note{font-size:clamp(4rem,22vw,6rem);font-weight:700;line-height:1;color:var(--blue)}
+.note small{font-size:.45em;color:var(--soft)}
+.review{width:100%;text-align:left;display:flex;flex-direction:column;gap:10px;margin:6px 0}
+.review h3{font-size:1.25rem;margin:8px 0 0}
+.err{background:var(--card);border:2px solid var(--line2);border-left:6px solid var(--red);border-radius:14px;padding:12px 14px;font-size:1.05rem;line-height:1.4}
+.err .eq{font-size:1.6rem;font-weight:700;margin-bottom:4px}
+.err .eq s{color:var(--red);text-decoration-thickness:3px}
+.err .ok{color:var(--green);font-weight:700}
+.tip{background:color-mix(in srgb,var(--blue) 10%,var(--card));border:2px solid var(--blue);border-radius:14px;padding:12px 14px;font-size:1.05rem;line-height:1.4}
+.perfect{font-size:1.2rem}
 .stars{font-size:2.2rem;letter-spacing:2px;line-height:1.3;max-width:300px}
 .end h2{font-size:2rem;margin:0}
 .end p{font-size:1.2rem;color:var(--soft);margin:0 0 10px}
 .end .go{width:100%;margin-top:6px}
-.badge{font-size:1.15rem;font-weight:700;padding:8px 14px;border-radius:14px;background:color-mix(in srgb,var(--gold) 25%,var(--card));border:2px solid var(--gold)}
-.badge:empty{display:none}
-.total{font-size:1.05rem;color:var(--soft)}
 .ghost{background:var(--card);border:2px solid var(--line2);border-radius:18px;font-size:1.2rem;padding:14px;width:100%;min-height:56px}
 
 @keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
@@ -190,16 +193,15 @@ button.num:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line2)}
   <div class="question"><span id="qText"></span></div>
   <div id="board"></div>
   <div id="signs"></div>
-  <div class="feedback" id="fb" aria-live="polite"></div>
 </section>
 
 <!-- Fin -->
 <section class="screen end" id="end">
-  <div class="stars" id="endStars"></div>
+  <div class="note" aria-live="polite"><span id="noteN"></span><small> / <span id="noteT"></span></small></div>
   <h2 id="endTitle"></h2>
   <p id="endText"></p>
-  <div class="badge" id="endBadge"></div>
-  <div class="total" id="endTotal"></div>
+  <div class="review" id="review"></div>
+  <button class="go" id="redo">Refaire mes erreurs</button>
   <button class="go" id="again">Rejouer</button>
   <button class="ghost" id="menu">Changer de jeu</button>
 </section>
@@ -211,7 +213,7 @@ let cfg = {mode:"grand", max:20, aide:true, son:true};
 try { Object.assign(cfg, JSON.parse(localStorage.getItem("cmp-cfg") || "{}")); } catch(e){}
 const save = () => { try { localStorage.setItem("cmp-cfg", JSON.stringify(cfg)); } catch(e){} };
 
-let q = 0, results = [], cur = null, tried = false, locked = false;
+let q = 0, results = [], errors = [], queue = null, total = TOTAL, cur = null, tried = false, locked = false;
 
 /* ---------- Accueil ---------- */
 function paintHome(){
@@ -249,6 +251,7 @@ function speak(t, force){
 /* ---------- Tirage ---------- */
 const rnd = (a,b) => a + Math.floor(Math.random()*(b-a+1));
 function pair(){
+  if(queue) return queue.shift();
   const max = cfg.max, r = Math.random();
   let a, b;
   if(cfg.mode === "signe" && r < .15){ a = b = rnd(0,max); return [a,b]; }
@@ -289,21 +292,20 @@ function explain(a,b){
 /* ---------- Partie ---------- */
 const QTEXT = {grand:"Touche le nombre le plus grand.", petit:"Touche le nombre le plus petit.", signe:"Choisis le bon signe."};
 
-function startGame(){ q = 0; results = []; show("game"); next(); }
+function startGame(list){ queue = Array.isArray(list) ? list.map(e => [e.a, e.b]) : null; total = queue ? queue.length : TOTAL; q = 0; results = []; errors = []; show("game"); next(); }
 
 function dots(){
-  $("#dots").innerHTML = Array.from({length:TOTAL}, (_,i) =>
-    `<span class="dot ${i < results.length ? (results[i] ? "ok" : "ko") : (i === q ? "now" : "")}"></span>`).join("");
+  $("#dots").innerHTML = Array.from({length:total}, (_,i) =>
+    `<span class="dot ${i < results.length ? "done" : (i === q ? "now" : "")}"></span>`).join("");
 }
 
 function next(){
-  if(q >= TOTAL) return finish();
+  if(q >= total) return finish();
   cur = pair(); tried = false; locked = false;
   dots();
   $("#qText").textContent = QTEXT[cfg.mode];
   const [a,b] = cur;
   const card = (n,i,btn) => `<${btn?"button":"div"} class="num" data-i="${i}" ${btn?`aria-label="${n}"`:""}><span class="n">${n}</span>${cfg.aide?blocks(n):""}</${btn?"button":"div"}>`;
-  const fb = $("#fb"); fb.className = "feedback"; fb.innerHTML = "";
   if(cfg.mode === "signe"){
     $("#board").className = "board";
     $("#board").innerHTML = card(a,0,false) + '<div class="slot" id="slot">?</div>' + card(b,1,false);
@@ -317,71 +319,95 @@ function next(){
   speak(QTEXT[cfg.mode]);
 }
 
-function answer(ok, wrongEl, goodEl){
+// Pas de correction pendant la partie : on note la réponse et on passe à la suite.
+function answer(ok, choix){
   if(locked) return;
-  const fb = $("#fb");
-  if(ok){
-    locked = true;
-    if(!tried) results.push(true); // étoile seulement si juste du premier coup
-    if(goodEl) goodEl.classList.add("good");
-    const cheers = ["Bravo !","Super !","Bien joué !","Excellent !","Oui !"];
-    const c = cheers[rnd(0,cheers.length-1)];
-    fb.className = "feedback show ok";
-    fb.innerHTML = `<strong>${c}</strong> ${tried ? "" : "⭐"}<br>${explain(cur[0],cur[1])}`;
-    speak(c);
-    q++; dots();
-    setTimeout(next, cfg.aide ? 2600 : 1900);
-  } else {
-    if(!tried){ tried = true; results.push(false); dots(); }
-    if(wrongEl){ wrongEl.classList.remove("bad"); void wrongEl.offsetWidth; wrongEl.classList.add("bad"); }
-    fb.className = "feedback show ko";
-    let extra = "";
-    if(cfg.mode === "signe") extra = `<div class="croc">🐊 La bouche du crocodile s'ouvre toujours vers le plus grand nombre.</div>`;
-    fb.innerHTML = `<strong>Pas tout à fait.</strong> Essaie encore !<br>${explain(cur[0],cur[1])}${extra}`;
-    speak("Pas tout à fait. Essaie encore !");
-  }
+  locked = true;
+  results.push(ok);
+  if(!ok) errors.push({a:cur[0], b:cur[1], choix});
+  q++; dots();
+  setTimeout(next, 500);
 }
 
 $("#board").onclick = e => {
-  const el = e.target.closest("button.num"); if(!el) return;
+  const el = e.target.closest("button.num"); if(!el || locked) return;
   const [a,b] = cur, v = el.dataset.i === "0" ? a : b, other = el.dataset.i === "0" ? b : a;
-  const ok = cfg.mode === "grand" ? v > other : v < other;
-  if(ok) answer(true, null, el);
-  else { el.classList.remove("bad"); answer(false, el); }
+  el.classList.add("picked");
+  answer(cfg.mode === "grand" ? v > other : v < other, v);
 };
 $("#signs").onclick = e => {
   const el = e.target.closest(".sign"); if(!el || locked) return;
   const [a,b] = cur, s = el.dataset.s;
-  const right = a < b ? "<" : a > b ? ">" : "=";
   const slot = $("#slot");
   slot.textContent = s;
-  slot.className = "slot";
-  void slot.offsetWidth;
-  if(s === right){ slot.classList.add("good"); answer(true, null, null); }
-  else { slot.classList.add("bad"); answer(false, null); }
+  slot.className = "slot picked";
+  answer(s === (a < b ? "<" : a > b ? ">" : "="), s);
 };
+
+const h = t => String(t).replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const signeDe = (a,b) => a < b ? "<" : a > b ? ">" : "=";
+
+function conseil(){
+  const c = {diz:0, uni:0, egal:0, croc:0};
+  errors.forEach(e => {
+    if(e.a === e.b) c.egal++;
+    else if(Math.floor(e.a/10) === Math.floor(e.b/10)) c.uni++;
+    else c.diz++;
+    if(cfg.mode === "signe" && e.a !== e.b && (e.choix === "<" || e.choix === ">")) c.croc++;
+  });
+  const t = [];
+  if(c.diz && c.diz >= c.uni) t.push("Regarde d'abord le chiffre des <strong>dizaines</strong> (le premier chiffre). Le nombre qui a le plus de dizaines est le plus grand.");
+  if(c.uni && c.uni >= c.diz) t.push("Quand les dizaines sont pareilles, compare les <strong>unités</strong> (le dernier chiffre).");
+  if(c.egal) t.push("Quand les deux nombres sont pareils, on met le signe <strong>=</strong>.");
+  if(c.croc) t.push("🐊 La bouche du crocodile s'ouvre toujours vers le plus grand nombre.");
+  return t.length ? `<div class="tip"><strong>Pour progresser :</strong><br>${t.join("<br>")}</div>` : "";
+}
 
 function finish(){
   const n = results.filter(Boolean).length;
-  $("#endStars").textContent = "⭐".repeat(n) + "☆".repeat(TOTAL-n);
-  const title = n === TOTAL ? "Parfait !" : n >= 8 ? "Bravo !" : n >= 5 ? "Bien joué !" : "Continue, tu progresses !";
+  const ratio = n / total;
+  const title = ratio === 1 ? "Parfait !" : ratio >= .8 ? "Très bien !" : ratio >= .5 ? "Bien, continue !" : "On s'entraîne encore !";
+  $("#noteN").textContent = n; $("#noteT").textContent = total;
   $("#endTitle").textContent = title;
-  $("#endText").textContent = `${n} étoile${n>1?"s":""} sur ${TOTAL}`;
-  let extra = "";
-  $("#endBadge").textContent = ""; $("#endTotal").textContent = "";
-  if(window.Cartable){
+
+  let txt = "";
+  if(queue){
+    txt = `Tu as corrigé ${n} erreur${n>1?"s":""} sur ${total}.`;
+  } else if(window.Cartable){
     const r = Cartable.enregistrer("comparer", n, TOTAL);
-    if(r.nouveauTrophee){ $("#endBadge").textContent = `${r.nouveauTrophee.icone} Nouveau trophée : ${r.nouveauTrophee.nom} !`; extra = ` Tu gagnes le trophée ${r.nouveauTrophee.nom} !`; }
-    else if(r.record){ $("#endBadge").textContent = "🎉 Nouveau record !"; extra = " Nouveau record !"; }
-    else $("#endBadge").textContent = `Ton record : ${r.meilleur} sur ${TOTAL}`;
-    $("#endTotal").textContent = `Tu as ${r.totalEtoiles} étoiles dans ton cartable.`;
+    if(r.precedente !== null){
+      txt = n > r.precedente ? `Tu progresses : ${r.precedente} / ${TOTAL} la dernière fois.`
+          : n === r.precedente ? `Comme la dernière fois (${r.precedente} / ${TOTAL}).`
+          : `La dernière fois : ${r.precedente} / ${TOTAL}. Tu vas y arriver !`;
+    }
+  }
+  $("#endText").textContent = txt;
+
+  if(errors.length){
+    $("#review").innerHTML = `<h3>Tes erreurs</h3>` + errors.map(e => {
+      if(cfg.mode === "signe"){
+        const ok = signeDe(e.a, e.b);
+        return `<div class="err"><div class="eq">${e.a} <s>${h(e.choix)}</s> <span class="ok">${h(ok)}</span> ${e.b}</div>
+          Tu as mis ${h(e.choix)}. Il fallait <span class="ok">${e.a} ${h(ok)} ${e.b}</span>.<br>${explain(e.a, e.b)}</div>`;
+      }
+      const ok = cfg.mode === "grand" ? Math.max(e.a, e.b) : Math.min(e.a, e.b);
+      return `<div class="err"><div class="eq">${e.a} et ${e.b}</div>
+        Tu as choisi <s>${e.choix}</s>. Le plus ${cfg.mode === "grand" ? "grand" : "petit"}, c'est <span class="ok">${ok}</span>.<br>${explain(e.a, e.b)}</div>`;
+    }).join("") + conseil();
+    $("#redo").style.display = "";
+    $("#again").className = "ghost";
+  } else {
+    $("#review").innerHTML = `<p class="perfect">Aucune erreur, bravo ! 🎉</p>`;
+    $("#redo").style.display = "none";
+    $("#again").className = "go";
   }
   show("end");
-  speak(`${title} ${n} étoile${n>1?"s":""} sur ${TOTAL}.${extra}`);
+  speak(`${title} ${n} sur ${total}.${errors.length ? " Regarde tes erreurs pour progresser." : ""}`);
 }
 
-$("#start").onclick = startGame;
-$("#again").onclick = startGame;
+$("#start").onclick = () => startGame();
+$("#again").onclick = () => startGame();
+$("#redo").onclick = () => startGame(errors);
 $("#menu").onclick = () => { paintHome(); show("home"); };
 $("#back").onclick = () => { if("speechSynthesis" in window) speechSynthesis.cancel(); paintHome(); show("home"); };
 $("#say").onclick = () => speak(QTEXT[cfg.mode], true);
