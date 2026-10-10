@@ -87,7 +87,7 @@ h1 .lt{color:var(--blue)} h1 .gt{color:var(--orange)}
 .dot.now{border-color:var(--blue)}
 .dot.done{background:var(--blue);border-color:var(--blue)}
 .num.picked{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 12%,var(--card))}
-.slot.picked{border-style:solid;border-color:var(--blue);color:var(--blue);animation:pop .3s}
+.slot.picked{border-style:solid;border-color:var(--blue);color:var(--blue)}
 .question{display:flex;align-items:center;gap:10px;font-size:1.45rem;font-weight:700;line-height:1.2;min-height:64px;margin-bottom:10px}
 .question span{flex:1}
 .board{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:8px}
@@ -316,7 +316,7 @@ function next(){
     $("#board").innerHTML = card(a,0,true) + card(b,1,true);
     $("#signs").className = ""; $("#signs").innerHTML = "";
   }
-  speak(QTEXT[cfg.mode]);
+  if(q === 0) speak(QTEXT[cfg.mode]); // consigne lue seulement au début (🔊 pour la réécouter)
 }
 
 // Pas de correction pendant la partie : on note la réponse et on passe à la suite.
@@ -326,7 +326,7 @@ function answer(ok, choix){
   results.push(ok);
   if(!ok) errors.push({a:cur[0], b:cur[1], choix});
   q++; dots();
-  setTimeout(next, 500);
+  setTimeout(next, 250);
 }
 
 $("#board").onclick = e => {
