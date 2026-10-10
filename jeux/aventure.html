@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>L'aventure de la licorne</title>
+<link rel="apple-touch-icon" href="../icon.png">
+<link rel="manifest" href="../manifest.json">
+<script src="../score.js"></script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cartable">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F9FF; --line:#D6E2F7; --line2:#B9CCEE; --margin:#EFA0A0;
+  --ink:#1D2A4D; --soft:#5A6788; --card:#FFFFFF;
+  --blue:#2F6FDB; --orange:#F29B30; --green:#2E9E5B; --red:#D9473F; --violet:#7A5AD8;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#131A2B; --line:#1C2640; --line2:#26345A; --margin:#5A2A33;
+    --ink:#EEF2FF; --soft:#A6B1D1; --card:#1C2540;
+    --blue:#6B9BF0; --orange:#F5AE52; --green:#4CC27E; --red:#F0716A; --violet:#A28BF0;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131A2B; --line:#1C2640; --line2:#26345A; --margin:#5A2A33;
+  --ink:#EEF2FF; --soft:#A6B1D1; --card:#1C2540;
+  --blue:#6B9BF0; --orange:#F5AE52; --green:#4CC27E; --red:#F0716A; --violet:#A28BF0;
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{
+  font-family:"Andika","Comic Sans MS",system-ui,sans-serif;color:var(--ink);
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(90deg,transparent 22px,var(--margin) 22px,var(--margin) 24px,transparent 24px),
+    repeating-linear-gradient(0deg,var(--line2) 0 1px,transparent 1px 32px),
+    repeating-linear-gradient(0deg,var(--line) 0 1px,transparent 1px 8px),
+    repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 32px);
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;
+}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.screen{display:none;min-height:100%;max-width:520px;margin:0 auto;padding:16px 16px 24px 36px;flex-direction:column}
+.screen.on{display:flex}
+
+/* Accueil */
+.backhub{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--line2);border-radius:14px;padding:10px 14px;font-size:1.05rem;font-weight:700;color:var(--ink);text-decoration:none;min-height:48px}
+.cover{margin:16px 0 10px;border-radius:24px;padding:22px 16px;text-align:center;color:#fff;
+  background:linear-gradient(160deg,#7A5AD8,#E0508A 55%,#F29B30)}
+.cover .cast{font-size:3.4rem;letter-spacing:6px;line-height:1.1}
+.cover h1{font-size:2rem;line-height:1.1;margin:8px 0 0;text-shadow:0 2px 0 rgba(0,0,0,.2)}
+.intro{color:var(--soft);font-size:1.05rem;margin:0 0 18px;line-height:1.45}
+.group{margin-bottom:18px}
+.group h2{font-size:1.15rem;margin:0 0 8px}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--card);border:2px solid var(--line2);border-radius:14px;padding:12px 14px;font-size:1.1rem;min-height:52px;flex:1 1 auto;text-align:left}
+.chip[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 0 0 0 2px var(--blue);font-weight:700}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card);border:2px solid var(--line2);border-radius:14px;padding:12px 14px;width:100%;font-size:1.1rem;text-align:left;margin-bottom:8px}
+.switch{width:52px;height:30px;border-radius:15px;background:var(--line2);position:relative;flex:none;transition:background .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle[aria-pressed="true"] .switch{background:var(--green)}
+.toggle[aria-pressed="true"] .switch::after{transform:translateX(22px)}
+.go{margin-top:auto;background:var(--violet);color:#fff;border:0;border-radius:18px;font-size:1.5rem;font-weight:700;padding:18px;min-height:64px;box-shadow:0 5px 0 color-mix(in srgb,var(--violet) 60%,#000)}
+.go:active{transform:translateY(3px);box-shadow:0 2px 0 color-mix(in srgb,var(--violet) 60%,#000)}
+.ghost{background:var(--card);border:2px solid var(--line2);border-radius:18px;font-size:1.2rem;padding:14px;width:100%;min-height:56px}
+
+/* Aventure */
+.top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.icon{background:var(--card);border:2px solid var(--line2);border-radius:14px;width:48px;height:48px;font-size:1.4rem;flex:none;display:grid;place-items:center}
+.hearts{font-size:1.5rem;flex:none}
+.hearts .lost{filter:grayscale(1);opacity:.35}
+.hearts .pop{display:inline-block;animation:pop .5s}
+.map{flex:1;display:flex;align-items:center;gap:3px;min-width:0}
+.map i{flex:1;height:8px;border-radius:4px;background:var(--line2)}
+.map i.done{background:var(--violet)}
+.map i.now{background:var(--orange)}
+.map b{font-size:1.2rem}
+.band{position:relative;border-radius:22px;min-height:132px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;color:#fff;overflow:hidden}
+.band .lieu{position:absolute;top:10px;left:12px;background:rgba(0,0,0,.28);border-radius:10px;padding:3px 10px;font-size:.95rem;font-weight:700}
+.band .cast{font-size:3.4rem;letter-spacing:8px;line-height:1.1;margin-top:14px}
+.band .react{position:absolute;inset:0;display:none;place-items:center;font-size:2rem;font-weight:700;text-align:center;background:rgba(0,0,0,.45);padding:10px}
+.band .react.on{display:grid;animation:fade .3s}
+.story{background:var(--card);border:2px solid var(--line2);border-radius:18px;padding:12px 14px;margin-top:10px;font-size:1.2rem;line-height:1.45;display:flex;gap:10px;align-items:flex-start}
+.story p{margin:0;flex:1}
+.story .icon{width:42px;height:42px;font-size:1.2rem}
+.enigme{margin-top:12px}
+.enigme .q{font-size:1.3rem;font-weight:700;line-height:1.3;margin-bottom:8px}
+.vis{background:var(--card);border:3px dashed var(--line2);border-radius:18px;padding:12px;text-align:center;font-size:2rem;line-height:1.3;margin-bottom:10px}
+.vis.big{font-size:3rem;font-weight:700}
+.vis .row{display:block;letter-spacing:4px}
+.vis .t{color:var(--blue);background:color-mix(in srgb,var(--blue) 15%,var(--card));border-radius:10px;padding:0 .06em}
+.vis .blank{display:inline-block;min-width:.75em;height:1.05em;vertical-align:-.12em;border:3px dashed var(--line2);border-radius:10px;margin-right:2px}
+.rep{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.rep.two{grid-template-columns:1fr 1fr}
+.rep button{background:var(--card);border:3px solid var(--line2);border-radius:18px;min-height:84px;font-size:1.9rem;font-weight:700;box-shadow:0 5px 0 var(--line2);padding:6px;line-height:1.15}
+.rep button small{display:block;font-size:1rem;font-weight:400;color:var(--soft)}
+.rep button.emo{font-size:2.8rem}
+.rep button.word{font-size:1.35rem}
+.rep button.lettre{font-size:2.8rem}
+.rep button:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line2)}
+.rep button.picked{border-color:var(--violet);background:color-mix(in srgb,var(--violet) 14%,var(--card))}
+.continue{margin-top:14px;width:100%}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.7)}100%{transform:scale(1)}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+/* Fin */
+.end{gap:12px;padding-top:18px}
+.end .band{min-height:150px}
+.note{font-size:clamp(3.6rem,20vw,5.4rem);font-weight:700;line-height:1;color:var(--violet);text-align:center}
+.note small{font-size:.45em;color:var(--soft)}
+.end h2{font-size:1.8rem;margin:0;text-align:center}
+.end p.sub{font-size:1.15rem;color:var(--soft);margin:0;text-align:center}
+.review{width:100%;display:flex;flex-direction:column;gap:10px;margin:6px 0}
+.review h3{font-size:1.25rem;margin:8px 0 0}
+.err{background:var(--card);border:2px solid var(--line2);border-left:6px solid var(--red);border-radius:14px;padding:12px 14px;font-size:1.05rem;line-height:1.45}
+.err .head{font-size:1.15rem;font-weight:700;margin-bottom:4px}
+.err .head span{color:var(--soft);font-weight:400;font-size:.95rem;display:block}
+.ok{color:var(--green);font-weight:700}
+.no{color:var(--red);font-weight:700}
+.perfect{font-size:1.2rem;text-align:center}
+.end .go{width:100%;margin-top:6px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+
+<section class="screen on" id="home">
+  <a class="backhub" href="../index.html">← Mon cartable</a>
+  <div class="cover"><div class="cast">🧚🦄🛡️</div><h1>L'aventure de la licorne</h1></div>
+  <p class="intro">Le troll Grognon a volé l'arc-en-ciel d'Étoile la licorne. Avec la fée Lumina, résous 10 énigmes de calcul et de lecture pour le récupérer. Tu as 2 vies : à la 3<sup>e</sup> erreur, Grognon gagne !</p>
+  <div class="group">
+    <h2>Je suis…</h2>
+    <div class="choices" id="heros">
+      <button class="chip" data-h="f">🛡️ une chevalière</button>
+      <button class="chip" data-h="m">🛡️ un chevalier</button>
+    </div>
+  </div>
+  <div class="group">
+    <button class="toggle" id="tSon"><span>Lire l'histoire à voix haute</span><span class="switch"></span></button>
+  </div>
+  <button class="go" id="start">Commencer l'aventure</button>
+</section>
+
+<section class="screen" id="game">
+  <div class="top">
+    <button class="icon" id="back" aria-label="Arrêter l'aventure">⌂</button>
+    <div class="hearts" id="hearts" aria-label="Vies"></div>
+    <div class="map" id="map" aria-hidden="true"></div>
+  </div>
+  <div class="band" id="band"></div>
+  <div class="story"><p id="story"></p><button class="icon" id="say" aria-label="Relire">🔊</button></div>
+  <div class="enigme" id="enigme"></div>
+</section>
+
+<section class="screen end" id="end">
+  <div class="band" id="endBand"></div>
+  <div class="story"><p id="endStory"></p></div>
+  <div class="note"><span id="noteN"></span><small> / <span id="noteT"></span></small></div>
+  <h2 id="endTitle"></h2>
+  <p class="sub" id="endText"></p>
+  <div class="review" id="review"></div>
+  <button class="go" id="redo">Refaire mes erreurs</button>
+  <button class="go" id="again">Rejouer l'aventure</button>
+  <button class="ghost" id="menu">Retour</button>
+</section>
+
+<script>
+const $ = s => document.querySelector(s);
+const VIES = 2, ID = "aventure";
+let cfg = {h:"f", son:true};
+try { Object.assign(cfg, JSON.parse(localStorage.getItem("aventure-cfg") || "{}")); } catch(e){}
+const save = () => { try { localStorage.setItem("aventure-cfg", JSON.stringify(cfg)); } catch(e){} };
+const G = (f, m) => cfg.h === "f" ? f : m;   // accords : chevalière / chevalier
+
+/* ---------- Outils ---------- */
+const rnd = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const pick = a => a[rnd(0,a.length-1)];
+const shuffle = a => { a = a.slice(); for(let i=a.length-1;i>0;i--){ const j = rnd(0,i); [a[i],a[j]] = [a[j],a[i]]; } return a; };
+function proches(n, ecarts, min = 0){
+  const c = shuffle([...new Set(ecarts.flatMap(e => [n-e, n+e]))].filter(x => x >= min && x !== n));
+  return c.slice(0,2);
+}
+const nombres = (rep, autres) => shuffle([rep, ...autres]).map(v => ({v, html:String(v)}));
+
+/* ---------- Les 10 énigmes (tirées au hasard à chaque partie) ---------- */
+const MOTS_IMAGES = [["couronne","👑"],["château","🏰"],["dragon","🐉"],["lune","🌙"],["fleur","🌸"],["pomme","🍎"],["cheval","🐴"],["clé","🔑"],["étoile","⭐"],["bateau","⛵"],["sapin","🎄"],["gâteau","🍰"]];
+const SONS = {
+  "ou": {dit:"ou",  mots:[["loup","🐺"],["hibou","🦉"],["roue","🛞"],["poule","🐔"]]},
+  "on": {dit:"on",  mots:[["ballon","🎈"],["pont","🌉"],["melon","🍈"],["savon","🧼"]]},
+  "oi": {dit:"oua", mots:[["roi","🤴"],["étoile","⭐"],["oiseau","🐦"],["noix","🌰"]]},
+  "ch": {dit:"che", mots:[["chat","🐱"],["cheval","🐴"],["chien","🐶"],["vache","🐮"]]},
+};
+const BD = [["_ragon","d","🐉"],["_ent","d","🦷"],["_auphin","d","🐬"],["ca_eau","d","🎁"],["_ateau","b","⛵"],["_anane","b","🍌"],["ro_ot","b","🤖"],["zè_re","b","🦓"],["_omme","p","🍎"],["sa_in","p","🎄"],["la_in","p","🐰"],["_orte","p","🚪"]];
+const CG = [["^cerise","🍒"],["^citron","🍋"],["^cygne","🦢"],["^carotte","🥕"],["^cochon","🐷"],["^cube","🧊"],["^girafe","🦒"],["^genou","🦵"],["oran^ge","🍊"],["^gâteau","🍰"],["^gorille","🦍"],["dra^gon","🐉"]];
+const RIMES = [["fée","épée","🗡️"],["château","bateau","⛵"],["licorne","corne","🦄"],["chevalier","escalier","🪜"],["troll","bol","🥣"],["lune","prune","🫐"]];
+const NON_RIMES = ["soleil","maison","poisson","tortue","jardin","rivière","papillon"];
+
+const SCENES = [
+  { lieu:"La forêt enchantée", bg:"linear-gradient(160deg,#2E7D4F,#8FD18B)", cast:"🌲🧚🌲",
+    texte:() => `La fée Lumina t'attend dans la forêt. « Mes lucioles magiques vont nous montrer le chemin. Mais d'abord, il faut les compter ! »`,
+    gen(){ const n = rnd(6,12);
+      const rows = []; for(let i=0;i<n;i+=5) rows.push(`<span class="row">${"✨".repeat(Math.min(5,n-i))}</span>`);
+      return {type:"Compter", q:"Combien y a-t-il de lucioles ?", say:"Combien y a-t-il de lucioles ?",
+        vis:rows.join(""), choix:nombres(n, proches(n,[1,2],1)), rep:n,
+        explique:`Il y avait <span class="ok">${n}</span> lucioles. Compte-les par lignes de 5 : ${Array.from({length:Math.ceil(n/5)},(_,i)=>Math.min(5,n-5*i)).join(" + ")} = ${n}.`}; } },
+  { lieu:"La porte du jardin", bg:"linear-gradient(160deg,#E0508A,#F9C6E0)", cast:"🚪🧚🛡️",
+    texte:() => `Une grande porte bloque le jardin des fées. Un mot magique est écrit dessus. « Lis-le et touche le bon dessin pour ouvrir la porte ! »`,
+    gen(){ const [mot, emo] = pick(MOTS_IMAGES); const autres = shuffle(MOTS_IMAGES.filter(x => x[0] !== mot)).slice(0,2);
+      return {type:"Lecture", q:"Quel dessin correspond au mot ?", say:"Lis le mot magique et touche le bon dessin.",
+        vis:`<span style="font-weight:700">${mot}</span>`, cls:"emo", choix:shuffle([[mot,emo],...autres]).map(([m,e]) => ({v:m, html:e})), rep:mot,
+        explique:`Le mot était « <span class="ok">${mot}</span> » : c'est ${emo}.`, montre:c => MOTS_IMAGES.find(x => x[0]===c)?.[1] || c}; } },
+  { lieu:"Le verger", bg:"linear-gradient(160deg,#6BB34A,#DDF2C2)", cast:"🍎🦄🍎",
+    texte:() => `Voici Étoile, la licorne ! Sans son arc-en-ciel, elle est toute fatiguée. « Aide-moi à ramasser des pommes pour reprendre des forces ! »`,
+    gen(){ const a = rnd(2,7), b = rnd(1,10-a), r = a+b;
+      return {type:"Addition", q:`Étoile a ${a} pommes. Tu lui en donnes ${b}. Combien en a-t-elle maintenant ?`, say:`Étoile a ${a} pommes. Tu lui en donnes ${b}. Combien en a-t-elle maintenant ?`,
+        vis:`${"🍎".repeat(a)} + ${"🍏".repeat(b)}`, choix:nombres(r, proches(r,[1,2],1)), rep:r,
+        explique:`${a} + ${b} = <span class="ok">${r}</span>. Pars de ${a} et avance de ${b} : ${Array.from({length:b},(_,i)=>a+i+1).join(", ")}.`}; } },
+  { lieu:"La rivière", bg:"linear-gradient(160deg,#3D8FD1,#BFE3FA)", cast:"🌊🐟🦄",
+    texte:() => `Pour traverser la rivière, il faut parler au poisson magique. Il ne laisse passer que ceux qui reconnaissent les sons !`,
+    gen(){ const son = pick(Object.keys(SONS)), [mot, emo] = pick(SONS[son].mots);
+      const autres = shuffle(Object.keys(SONS).filter(s => s !== son).flatMap(s => SONS[s].mots))
+        .filter(([m]) => !m.includes(son)).slice(0,2);
+      return {type:"Les sons", q:`Dans quel mot entends-tu le son « ${son} » ?`, say:`Dans quel mot entends-tu le son ${SONS[son].dit} ?`,
+        vis:`<span style="font-weight:700">« ${son} »</span>`, cls:"word", choix:shuffle([[mot,emo],...autres]).map(([m,e]) => ({v:m, html:`${e}<small>${m}</small>`})), rep:mot,
+        explique:`Dans « <span class="ok">${mot}</span> », on voit et on entend « ${son} » : ${mot.replace(son, `<span class="ok">${son}</span>`)}.`}; } },
+  { lieu:"Le vieux pont", bg:"linear-gradient(160deg,#7D8EA3,#D6DEE8)", cast:"🌉🛡️🦄",
+    texte:() => `Oh non ! Le pont a perdu une lettre et il commence à trembler. Vite, ${G("chevalière","chevalier")}, trouve la lettre qui manque !`,
+    gen(){ const [m, l, emo] = pick(BD), set = shuffle(["b","d","p","q"].filter(x => x !== l)).slice(0,2);
+      return {type:"Les lettres b, d, p", q:"Quelle lettre manque ?", say:"Quelle lettre manque ?",
+        vis:`${emo}<br><span style="font-weight:700;font-size:2.6rem">${m.replace("_",'<span class="blank">&nbsp;</span>')}</span>`, cls:"lettre", choix:shuffle([l,...set]).map(v => ({v, html:v})), rep:l,
+        explique:`Le mot était « <span class="ok">${m.replace("_", l)}</span> ». ${{b:"Le b : la barre monte, le rond est à droite.",d:"Le d : le rond est à gauche, la barre monte.",p:"Le p : la barre descend, le rond est à droite.",q:"Le q : le rond est à gauche, la barre descend."}[l]}`}; } },
+  { lieu:"La caverne aux trésors", bg:"linear-gradient(160deg,#5B4A7A,#A595C7)", cast:"💰🧚💰",
+    texte:() => `Dans la caverne, deux coffres brillent. Lumina chuchote : « Grognon a caché une clé dans le coffre qui a le plus de pièces d'or. »`,
+    gen(){ let a = rnd(12,98), b; do { b = Math.random() < .5 ? Number(String(a).split("").reverse().join("")) : a + rnd(-9,9); } while(b === a || b < 10 || b > 99);
+      const r = Math.max(a,b);
+      return {type:"Comparer", q:"Quel coffre a le plus de pièces ?", say:"Quel coffre a le plus de pièces d'or ?",
+        vis:"💰 💰", two:true, choix:[a,b].map(v => ({v, html:`${v}<small>pièces</small>`})), rep:r,
+        explique:`<span class="ok">${r}</span> est plus grand que ${Math.min(a,b)}. ${Math.floor(a/10) !== Math.floor(b/10) ? "Regarde d'abord les dizaines (le premier chiffre)." : "Les dizaines sont pareilles : regarde les unités."}`}; } },
+  { lieu:"Le tunnel sombre", bg:"linear-gradient(160deg,#2F2A47,#6E6596)", cast:"🦇🦇🦇",
+    texte:() => `Grognon a envoyé des chauves-souris pour vous faire peur ! Lumina agite sa baguette et en fait disparaître quelques-unes.`,
+    gen(){ const a = rnd(5,10), b = rnd(1,a-1), r = a-b;
+      return {type:"Soustraction", q:`Il y avait ${a} chauves-souris. ${b} disparaissent. Combien en reste-t-il ?`, say:`Il y avait ${a} chauves-souris. ${b} disparaissent. Combien en reste-t-il ?`,
+        vis:"🦇".repeat(a), choix:nombres(r, proches(r,[1,2],0)), rep:r,
+        explique:`${a} − ${b} = <span class="ok">${r}</span>. Pars de ${a} et recule de ${b} : ${Array.from({length:b},(_,i)=>a-i-1).join(", ")}.`}; } },
+  { lieu:"La porte du donjon", bg:"linear-gradient(160deg,#7A6A5A,#CDBBA6)", cast:"🏰🔒🛡️",
+    texte:() => `Voici le donjon de Grognon ! Le cadenas de la porte a un code secret : une suite de nombres à compléter.`,
+    gen(){ const pas = pick([1,2,10]), d = rnd(1, pas === 10 ? 50 : 15), s = [0,1,2].map(i => d + i*pas), r = d + 3*pas;
+      return {type:"Suite de nombres", q:"Quel nombre vient après ?", say:"Complète la suite de nombres.",
+        vis:`<span style="font-weight:700">${s.join(", ")}, ?</span>`, choix:nombres(r, proches(r,[1, pas === 1 ? 2 : pas],0)), rep:r,
+        explique:`${s.join(", ")}, … : on ajoute ${pas} à chaque fois, donc ${s[2]} + ${pas} = <span class="ok">${r}</span>.`}; } },
+  { lieu:"Le grimoire", bg:"linear-gradient(160deg,#6B3FA0,#C7A6EE)", cast:"📖✨🧚",
+    texte:() => `Sur une table, le grimoire de Grognon est ouvert. Pour lire la formule qui rend ses pouvoirs à Étoile, il faut bien lire chaque lettre.`,
+    gen(){ const [m, emo] = pick(CG), i = m.indexOf("^"), mot = m.replace("^",""), L = mot[i], nx = mot[i+1];
+      const doux = "eéiy".includes(nx), lettre = L === "g" ? "g" : "c";
+      const dur = lettre === "c" ? "ke" : "gue", dx = lettre === "c" ? "se" : "je", r = doux ? dx : dur;
+      return {type:"Le c et le g", q:`Comment se lit le ${lettre} en bleu ?`, say:`Comment se lit la lettre en bleu ?`,
+        vis:`<span style="font-weight:700;font-size:2.6rem">${mot.slice(0,i)}<span class="t">${L}</span>${mot.slice(i+1)}</span>`, two:true, choix:[dur,dx].map(v => ({v, html:v})), rep:r,
+        explique:`${emo} « ${mot} » : après le ${lettre}, il y a « ${nx} ». ${doux ? `Devant e, i, y, le ${lettre} fait <span class="ok">« ${dx} »</span>.` : `Devant a, o, u, le ${lettre} fait <span class="ok">« ${dur} »</span>.`}`}; } },
+  { lieu:"Le combat contre Grognon", bg:"linear-gradient(160deg,#3B1F2B,#9C3B4A)", cast:"🧌⚔️🛡️",
+    texte:() => `Grognon est là, avec l'arc-en-ciel dans un sac ! « Ha ha ! Réponds à ma dernière énigme, ${G("petite chevalière","petit chevalier")}, ou l'arc-en-ciel est à moi pour toujours ! »`,
+    gen(){ const [mot, rime, emo] = pick(RIMES), autres = shuffle(NON_RIMES).slice(0,2);
+      return {type:"Les rimes", q:`Quel mot rime avec « ${mot} » ?`, say:`Quel mot rime avec ${mot} ?`,
+        vis:`<span style="font-weight:700">« ${mot} »</span>`, cls:"word", choix:shuffle([rime,...autres]).map(v => ({v, html:v})), rep:rime,
+        explique:`« ${mot} » et « <span class="ok">${rime}</span> » ${emo} finissent par le même son.`}; } },
+];
+
+/* ---------- Accueil ---------- */
+function paintHome(){
+  document.querySelectorAll("#heros .chip").forEach(b => b.setAttribute("aria-pressed", b.dataset.h === cfg.h));
+  $("#tSon").setAttribute("aria-pressed", cfg.son);
+}
+$("#heros").onclick = e => { const b = e.target.closest(".chip"); if(!b) return; cfg.h = b.dataset.h; save(); paintHome(); };
+$("#tSon").onclick = () => { cfg.son = !cfg.son; save(); paintHome(); if(!cfg.son && "speechSynthesis" in window) speechSynthesis.cancel(); };
+paintHome();
+function show(id){ document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id)); window.scrollTo(0,0); }
+
+/* ---------- Voix ---------- */
+let frVoice = null;
+function pickVoice(){ if(!("speechSynthesis" in window)) return; const v = speechSynthesis.getVoices(); frVoice = v.find(x => /^fr(-|_)FR/i.test(x.lang)) || v.find(x => /^fr/i.test(x.lang)) || null; }
+if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(t, force){
+  if(!(cfg.son || force) || !("speechSynthesis" in window)) return;
+  try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t.replace(/[«»]/g,"")); u.lang = "fr-FR"; u.rate = .92; if(frVoice) u.voice = frVoice; speechSynthesis.speak(u); }catch(e){}
+}
+
+/* ---------- Déroulé de l'aventure ---------- */
+let etapes = [], i = 0, vies = VIES, results = [], errors = [], entrainement = false, locked = false, lu = "";
+
+function paintTop(lost){
+  $("#hearts").innerHTML = entrainement ? "" : Array.from({length:VIES}, (_,k) =>
+    `<span class="${k < vies ? "" : "lost"} ${lost && k === vies ? "pop" : ""}">❤️</span>`).join("");
+  $("#map").innerHTML = (entrainement ? "" : "🦄") + etapes.map((_,k) => `<i class="${k < i ? "done" : k === i ? "now" : ""}"></i>`).join("") + (entrainement ? "" : "<b>🌈</b>");
+}
+function band(el, sc, extra = ""){
+  el.style.background = sc.bg;
+  el.innerHTML = `<span class="lieu">${sc.lieu}</span><div class="cast">${sc.cast}</div><div class="react" id="react">${extra}</div>`;
+}
+function startGame(liste){
+  entrainement = Array.isArray(liste);
+  etapes = entrainement ? liste.map(e => e.etape) : SCENES.map((sc, k) => ({k, e: sc.gen()}));
+  i = 0; vies = VIES; results = []; errors = [];
+  show("game");
+  if(entrainement) return step();
+  // introduction
+  paintTop(false);
+  band($("#band"), {lieu:"Le château des fées", bg:"linear-gradient(160deg,#7A5AD8,#F9C6E0)", cast:"🧚🦄🏰"});
+  lu = `La fée Lumina accourt vers toi. « ${G("Courageuse chevalière","Courageux chevalier")}, le troll Grognon a volé l'arc-en-ciel d'Étoile la licorne ! Sans lui, elle ne peut plus voler. Viens avec nous le reprendre ! »`;
+  $("#story").textContent = lu;
+  $("#enigme").innerHTML = `<button class="go continue" id="go">En route !</button>`;
+  $("#go").onclick = step;
+  speak(lu);
+}
+function step(){
+  const {k, e} = etapes[i], sc = SCENES[k];
+  locked = false; paintTop(false);
+  band($("#band"), sc);
+  lu = sc.texte();
+  $("#story").textContent = lu;
+  $("#enigme").innerHTML = `<div class="q">${e.q}</div>
+    <div class="vis">${e.vis}</div>
+    <div class="rep ${e.two ? "two" : ""}">${e.choix.map(c => `<button class="${e.cls || ""}" data-v="${c.v}">${c.html}</button>`).join("")}</div>`;
+  speak(`${lu} ${e.say}`);
+}
+$("#enigme").addEventListener("click", ev => {
+  const b = ev.target.closest(".rep button"); if(!b || locked) return;
+  locked = true; b.classList.add("picked");
+  const {k, e} = etapes[i];
+  const ok = String(b.dataset.v) === String(e.rep);
+  results.push(ok);
+  if(!ok){ errors.push({etape:etapes[i], choix:b.dataset.v}); if(!entrainement) vies--; }
+  const react = $("#react");
+  if(ok){ react.textContent = pick(["✨ Bravo !","✨ Super !","✨ Magnifique !","✨ Bien joué !"]); }
+  else  { react.textContent = entrainement ? "Pas tout à fait…" : "💔 Oh non ! Grognon ricane…"; if(!entrainement) paintTop(true); }
+  react.classList.add("on");
+  speak(react.textContent.replace(/[✨💔]/g,""));
+  setTimeout(() => {
+    if(!entrainement && vies < 0) return finish(false);
+    i++;
+    if(i >= etapes.length) return finish(true);
+    step();
+  }, 1500);
+});
+
+/* ---------- Fin de l'aventure ---------- */
+function finish(gagne){
+  if("speechSynthesis" in window) speechSynthesis.cancel();
+  const n = results.filter(Boolean).length, total = etapes.length;
+  let histoire;
+  if(entrainement){
+    band($("#endBand"), {lieu:"Entraînement", bg:"linear-gradient(160deg,#7A5AD8,#F9C6E0)", cast:"🧚📚🦄"});
+    histoire = "Lumina est fière de toi : tu as revu tes énigmes difficiles.";
+  } else if(gagne){
+    band($("#endBand"), {lieu:"Victoire !", bg:"linear-gradient(160deg,#E53935,#F29B30,#F5D000,#2E9E5B,#2F6FDB,#7A5AD8)", cast:"🌈🦄🛡️"});
+    histoire = `Grognon s'enfuit en courant ! L'arc-en-ciel sort du sac et retourne sur le dos d'Étoile, qui s'envole dans le ciel. « Merci, ${G("chevalière","chevalier")} ! » disent Étoile et Lumina. Tu es ${G("une héroïne","un héros")} !`;
+  } else {
+    band($("#endBand"), {lieu:"Grognon a gagné…", bg:"linear-gradient(160deg,#3B1F2B,#6B4A5A)", cast:"🧌🌈💤"});
+    histoire = `Oh non, tu n'as plus de cœur. Grognon ricane et s'enfuit avec l'arc-en-ciel. Mais Lumina te souffle : « Ne t'inquiète pas, on peut réessayer ! »`;
+  }
+  $("#endStory").textContent = histoire;
+  $("#noteN").textContent = n; $("#noteT").textContent = entrainement ? total : SCENES.length;
+  $("#endTitle").textContent = entrainement ? (n === total ? "Tout est juste !" : "Continue !") : gagne ? (errors.length ? "Tu as gagné !" : "Victoire parfaite !") : "Perdu…";
+  let txt = "";
+  if(!entrainement){
+    if(!gagne) txt = `Tu as résolu ${n} énigme${n>1?"s":""} avant que Grognon gagne. Réessaie !`;
+    if(window.Cartable){
+      const r = Cartable.enregistrer(ID, n, SCENES.length);
+      if(gagne && r.precedente !== null)
+        txt = n > r.precedente ? `Tu progresses : ${r.precedente} / ${SCENES.length} la dernière fois.`
+            : n === r.precedente ? `Comme la dernière fois (${r.precedente} / ${SCENES.length}).`
+            : `La dernière fois : ${r.precedente} / ${SCENES.length}.`;
+    }
+  }
+  $("#endText").textContent = txt;
+  if(errors.length){
+    $("#review").innerHTML = `<h3>Tes erreurs</h3>` + errors.map(x => {
+      const e = x.etape.e, sc = SCENES[x.etape.k];
+      const choisi = e.montre ? e.montre(x.choix) : x.choix;
+      return `<div class="err"><div class="head">${e.type}<span>${sc.lieu} : ${e.q}</span></div>
+        Tu as répondu <span class="no">${choisi}</span>.<br>${e.explique}</div>`;
+    }).join("");
+    $("#redo").style.display = "";
+  } else {
+    $("#review").innerHTML = `<p class="perfect">Aucune erreur, bravo ! 🎉</p>`;
+    $("#redo").style.display = "none";
+  }
+  $("#again").textContent = gagne || entrainement ? "Rejouer l'aventure" : "Réessayer l'aventure";
+  $("#again").className = (errors.length && (gagne || entrainement)) ? "ghost" : "go";
+  show("end");
+  speak(histoire);
+}
+
+$("#start").onclick = () => startGame();
+$("#again").onclick = () => startGame();
+$("#redo").onclick = () => startGame(errors.slice());
+$("#menu").onclick = () => { if("speechSynthesis" in window) speechSynthesis.cancel(); paintHome(); show("home"); };
+$("#back").onclick = () => { if("speechSynthesis" in window) speechSynthesis.cancel(); paintHome(); show("home"); };
+$("#say").onclick = () => { const e = etapes[i] && etapes[i].e; speak(`${lu}${e && $("#enigme .q") ? " " + e.say : ""}`, true); };
+</script>
+</body>
+</html>
