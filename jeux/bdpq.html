@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>b, d, p, q</title>
+<link rel="apple-touch-icon" href="../icon.png">
+<link rel="manifest" href="../manifest.json">
+<script src="../score.js"></script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cartable">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F9FF; --line:#D6E2F7; --line2:#B9CCEE; --margin:#EFA0A0;
+  --ink:#1D2A4D; --soft:#5A6788; --card:#FFFFFF;
+  --blue:#2F6FDB; --orange:#F29B30; --green:#2E9E5B; --red:#D9473F;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#131A2B; --line:#1C2640; --line2:#26345A; --margin:#5A2A33;
+    --ink:#EEF2FF; --soft:#A6B1D1; --card:#1C2540;
+    --blue:#6B9BF0; --orange:#F5AE52; --green:#4CC27E; --red:#F0716A;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131A2B; --line:#1C2640; --line2:#26345A; --margin:#5A2A33;
+  --ink:#EEF2FF; --soft:#A6B1D1; --card:#1C2540;
+  --blue:#6B9BF0; --orange:#F5AE52; --green:#4CC27E; --red:#F0716A;
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{
+  font-family:"Andika","Comic Sans MS",system-ui,sans-serif;color:var(--ink);
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(90deg,transparent 22px,var(--margin) 22px,var(--margin) 24px,transparent 24px),
+    repeating-linear-gradient(0deg,var(--line2) 0 1px,transparent 1px 32px),
+    repeating-linear-gradient(0deg,var(--line) 0 1px,transparent 1px 8px),
+    repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 32px);
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;
+}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.screen{display:none;min-height:100%;max-width:520px;margin:0 auto;padding:16px 16px 24px 36px;flex-direction:column}
+.screen.on{display:flex}
+
+/* Accueil */
+.backhub{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--line2);border-radius:14px;padding:10px 14px;font-size:1.05rem;font-weight:700;color:var(--ink);text-decoration:none;min-height:48px}
+h1{font-size:3.2rem;line-height:1;margin:18px 0 6px;font-weight:700;letter-spacing:.08em}
+.intro{color:var(--soft);font-size:1.05rem;margin:0 0 22px}
+.group{margin-bottom:20px}
+.group h2{font-size:1.15rem;margin:0 0 8px}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--card);border:2px solid var(--line2);border-radius:14px;padding:12px 14px;font-size:1.1rem;min-height:52px;flex:1 1 auto;text-align:left}
+.chip[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 0 0 0 2px var(--blue);font-weight:700}
+.chip small{display:block;color:var(--soft);font-size:.9rem;font-weight:400}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card);border:2px solid var(--line2);border-radius:14px;padding:12px 14px;width:100%;font-size:1.1rem;text-align:left;margin-bottom:8px}
+.switch{width:52px;height:30px;border-radius:15px;background:var(--line2);position:relative;flex:none;transition:background .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle[aria-pressed="true"] .switch{background:var(--green)}
+.toggle[aria-pressed="true"] .switch::after{transform:translateX(22px)}
+.go{margin-top:auto;background:var(--blue);color:#fff;border:0;border-radius:18px;font-size:1.5rem;font-weight:700;padding:18px;min-height:64px;box-shadow:0 5px 0 color-mix(in srgb,var(--blue) 60%,#000)}
+.go:active{transform:translateY(3px);box-shadow:0 2px 0 color-mix(in srgb,var(--blue) 60%,#000)}
+.ghost{background:var(--card);border:2px solid var(--line2);border-radius:18px;font-size:1.2rem;padding:14px;width:100%;min-height:56px}
+
+/* Jeu */
+.top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.icon{background:var(--card);border:2px solid var(--line2);border-radius:14px;width:48px;height:48px;font-size:1.4rem;flex:none;display:grid;place-items:center}
+.dots{display:flex;gap:5px;flex:1;justify-content:center}
+.dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--line2);background:var(--card)}
+.dot.now{border-color:var(--blue)}
+.dot.done{background:var(--blue);border-color:var(--blue)}
+.question{font-size:1.45rem;font-weight:700;line-height:1.2;min-height:40px;margin-bottom:10px}
+.models{display:flex;justify-content:center;gap:14px;background:var(--card);border:2px solid var(--line2);border-radius:16px;padding:6px 10px;margin-bottom:12px}
+.models figure{margin:0;text-align:center;font-size:1.1rem;font-weight:700}
+.models svg{width:40px;height:66px;display:block}
+.legend{font-size:.85rem;color:var(--soft);align-self:center;line-height:1.3}
+.legend .lb{color:var(--blue);font-weight:700}.legend .lo{color:var(--orange);font-weight:700}
+
+.card{background:var(--card);border:3px solid var(--line2);border-radius:22px;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.card .emo{font-size:4.5rem;line-height:1;background:none;border:0;padding:0}
+.word{font-size:clamp(2.6rem,12vw,3.4rem);font-weight:700;letter-spacing:.04em;display:flex;align-items:flex-end}
+.blank{display:inline-grid;place-items:center;min-width:.8em;height:1.15em;margin:0 .06em;border:3px dashed var(--line2);border-radius:10px;color:var(--blue)}
+.blank.filled{border-style:solid;border-color:var(--blue)}
+.letters{display:grid;gap:12px;margin-top:16px}
+.lt{background:var(--card);border:3px solid var(--line2);border-radius:18px;font-size:3.4rem;font-weight:700;min-height:88px;box-shadow:0 5px 0 var(--line2);line-height:1}
+.lt:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line2)}
+.lt.picked{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 12%,var(--card))}
+
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.cell{background:var(--card);border:3px solid var(--line2);border-radius:16px;font-size:2.8rem;font-weight:700;aspect-ratio:1;line-height:1}
+.cell.sel{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 18%,var(--card))}
+.finish{margin-top:16px;width:100%}
+.target{display:inline-grid;place-items:center;width:1.5em;height:1.5em;border-radius:10px;background:var(--blue);color:#fff;font-size:1.3em;vertical-align:middle}
+
+/* Fin */
+.end{align-items:center;text-align:center;gap:12px;padding-top:28px}
+.note{font-size:clamp(4rem,22vw,6rem);font-weight:700;line-height:1;color:var(--blue)}
+.note small{font-size:.45em;color:var(--soft)}
+.end h2{font-size:2rem;margin:0}
+.end p{font-size:1.15rem;color:var(--soft);margin:0}
+.review{width:100%;text-align:left;display:flex;flex-direction:column;gap:10px;margin:6px 0}
+.review h3{font-size:1.25rem;margin:8px 0 0}
+.err{background:var(--card);border:2px solid var(--line2);border-left:6px solid var(--red);border-radius:14px;padding:12px 14px;font-size:1.05rem;line-height:1.4}
+.err .head{display:flex;align-items:center;gap:10px;font-size:1.9rem;font-weight:700;margin-bottom:4px}
+.err .head .e{font-size:2.2rem}
+.ok{color:var(--green);font-weight:700}
+.no{color:var(--red);font-weight:700;font-size:1.2em}
+.cmp{display:flex;gap:14px;margin:8px 0}
+.cmp figure{margin:0;text-align:center;font-size:.9rem;border:2px solid var(--line2);border-radius:12px;padding:4px 10px}
+.cmp figure.bad{border-color:var(--red)} .cmp figure.good{border-color:var(--green)}
+.cmp svg{width:40px;height:66px;display:block;margin:0 auto}
+.mini{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.mini span{width:38px;height:38px;display:grid;place-items:center;border-radius:9px;border:2px solid var(--line2);font-size:1.6rem;font-weight:700}
+.mini .found{border-color:var(--green);color:var(--green)}
+.mini .miss{border-color:var(--orange);border-style:dashed;background:color-mix(in srgb,var(--orange) 18%,var(--card))}
+.mini .wrong{border-color:var(--red);color:var(--red);background:color-mix(in srgb,var(--red) 14%,var(--card))}
+.tip{background:color-mix(in srgb,var(--blue) 10%,var(--card));border:2px solid var(--blue);border-radius:14px;padding:12px 14px;font-size:1.05rem;line-height:1.45}
+.tip p{margin:6px 0 0;color:var(--ink);font-size:1.05rem}
+.perfect{font-size:1.2rem}
+.end .go{width:100%;margin-top:6px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<section class="screen on" id="home">
+  <a class="backhub" href="../index.html">← Mon cartable</a>
+  <h1>b d p q</h1>
+  <p class="intro">10 questions pour ne plus confondre ces lettres.</p>
+  <div class="group">
+    <h2>Le jeu</h2>
+    <div class="choices" id="modes">
+      <button class="chip" data-mode="mot">Le mot mystère<small>Trouve la lettre qui manque</small></button>
+      <button class="chip" data-mode="chasse">La chasse aux lettres<small>Touche toutes les lettres demandées</small></button>
+    </div>
+  </div>
+  <div class="group">
+    <h2>Les lettres</h2>
+    <div class="choices" id="sets">
+      <button class="chip" data-set="bd">b et d</button>
+      <button class="chip" data-set="pq">p et q</button>
+      <button class="chip" data-set="tout">b, d, p et q</button>
+    </div>
+  </div>
+  <div class="group">
+    <button class="toggle" id="tAide"><span>Montrer le modèle des lettres</span><span class="switch"></span></button>
+    <button class="toggle" id="tSon"><span>Lire à voix haute</span><span class="switch"></span></button>
+  </div>
+  <button class="go" id="start">C'est parti !</button>
+</section>
+
+<section class="screen" id="game">
+  <div class="top">
+    <button class="icon" id="back" aria-label="Retour au menu">⌂</button>
+    <div class="dots" id="dots"></div>
+    <button class="icon" id="say" aria-label="Écouter">🔊</button>
+  </div>
+  <div id="models"></div>
+  <div class="question" id="qText"></div>
+  <div id="board"></div>
+</section>
+
+<section class="screen end" id="end">
+  <div class="note"><span id="noteN"></span><small> / <span id="noteT"></span></small></div>
+  <h2 id="endTitle"></h2>
+  <p id="endText"></p>
+  <div class="review" id="review"></div>
+  <button class="go" id="redo">Refaire mes erreurs</button>
+  <button class="go" id="again">Rejouer</button>
+  <button class="ghost" id="menu">Changer de jeu</button>
+</section>
+
+<script>
+const $ = s => document.querySelector(s);
+const TOTAL = 10;
+const ID = "bdpq";
+let cfg = {mode:"mot", set:"bd", aide:true, son:true};
+try { Object.assign(cfg, JSON.parse(localStorage.getItem("bdpq-cfg") || "{}")); } catch(e){}
+const save = () => { try { localStorage.setItem("bdpq-cfg", JSON.stringify(cfg)); } catch(e){} };
+
+const SETS = {bd:["b","d"], pq:["p","q"], tout:["b","d","p","q"]};
+
+/* Mots : « _ » = la lettre à trouver. La lettre cherchée n'apparaît pas ailleurs dans le mot. */
+const WORDS = [
+  ["_allon","b","🎈"],["_ateau","b","⛵"],["_anane","b","🍌"],["_ougie","b","🕯️"],["_us","b","🚌"],
+  ["_aleine","b","🐳"],["_ol","b","🥣"],["_otte","b","👢"],["ro_ot","b","🤖"],["zè_re","b","🦓"],
+  ["cra_e","b","🦀"],["ar_re","b","🌳"],["ro_e","b","👗"],["_ras","b","💪"],
+  ["_alai","b","🧹"],["_ague","b","💍"],["cu_e","b","🧊"],
+  ["_é","d","🎲"],["_auphin","d","🐬"],["_ent","d","🦷"],["_ragon","d","🐉"],["_inosaure","d","🦕"],
+  ["_iamant","d","💎"],["_ouche","d","🚿"],["ca_eau","d","🎁"],["sala_e","d","🥗"],["mala_e","d","🤒"],
+  ["ra_io","d","📻"],["_anse","d","💃"],["mon_e","d","🌍"],["sol_at","d","💂"],["lézar_","d","🦎"],["_oigt","d","👆"],
+  ["_omme","p","🍎"],["_oisson","p","🐟"],["_ain","p","🍞"],["_izza","p","🍕"],["_oule","p","🐔"],
+  ["_oire","p","🍐"],["_ingouin","p","🐧"],["la_in","p","🐰"],["sa_in","p","🎄"],["sou_e","p","🍲"],
+  ["_irate","p","🏴‍☠️"],["_orte","p","🚪"],["_iano","p","🎹"],["cha_eau","p","🎩"],["lou_e","p","🔍"],["_ouce","p","👍"],
+  ["_uatre","q","4️⃣"],["_uille","q","🎳"],["co_","q","🐓"],["cin_","q","5️⃣"],["co_uillage","q","🐚"],
+  ["ra_uette","q","🎾"],["mas_ue","q","🎭"],["cas_ue","q","⛑️"],["musi_ue","q","🎵"],["ma_uillage","q","💄"],
+].map(([m,l,e]) => ({m, l, e, mot: m.replace("_", l)}));
+
+let q = 0, results = [], errors = [], queue = null, total = TOTAL, cur = null, locked = false, used = new Set();
+
+/* ---------- Accueil ---------- */
+function paintHome(){
+  document.querySelectorAll("#modes .chip").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === cfg.mode));
+  document.querySelectorAll("#sets .chip").forEach(b => b.setAttribute("aria-pressed", b.dataset.set === cfg.set));
+  $("#tAide").setAttribute("aria-pressed", cfg.aide);
+  $("#tSon").setAttribute("aria-pressed", cfg.son);
+}
+$("#modes").onclick = e => { const b = e.target.closest(".chip"); if(!b) return; cfg.mode = b.dataset.mode; save(); paintHome(); };
+$("#sets").onclick = e => { const b = e.target.closest(".chip"); if(!b) return; cfg.set = b.dataset.set; save(); paintHome(); };
+$("#tAide").onclick = () => { cfg.aide = !cfg.aide; save(); paintHome(); };
+$("#tSon").onclick = () => { cfg.son = !cfg.son; save(); paintHome(); };
+paintHome();
+function show(id){ document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id)); window.scrollTo(0,0); }
+
+/* ---------- Voix ---------- */
+let frVoice = null;
+function pickVoice(){ if(!("speechSynthesis" in window)) return; const v = speechSynthesis.getVoices(); frVoice = v.find(x => /^fr(-|_)FR/i.test(x.lang)) || v.find(x => /^fr/i.test(x.lang)) || null; }
+if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(t, force){
+  if(!(cfg.son || force) || !("speechSynthesis" in window)) return;
+  try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = "fr-FR"; u.rate = .9; if(frVoice) u.voice = frVoice; speechSynthesis.speak(u); }catch(e){}
+}
+
+/* ---------- Modèle des lettres : la barre (bleu) et le rond (orange) ---------- */
+const SHAPE = {b:{x:18,y1:8,y2:70,cx:33}, d:{x:42,y1:8,y2:70,cx:27}, p:{x:18,y1:40,y2:95,cx:33}, q:{x:42,y1:40,y2:95,cx:27}};
+function model(l){
+  const s = SHAPE[l];
+  return `<svg viewBox="0 0 60 100" aria-hidden="true">
+    <line x1="2" y1="70" x2="58" y2="70" stroke="var(--line2)" stroke-width="2" stroke-dasharray="4 3"/>
+    <line x1="${s.x}" y1="${s.y1}" x2="${s.x}" y2="${s.y2}" stroke="var(--blue)" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="${s.cx}" cy="55" r="13" fill="none" stroke="var(--orange)" stroke-width="7"/></svg>`;
+}
+const TIP = {
+  b:"Le <strong>b</strong> : la barre monte vers le ciel, le rond est à droite.",
+  d:"Le <strong>d</strong> : le rond est à gauche, la barre monte vers le ciel.",
+  p:"Le <strong>p</strong> : la barre descend sous la ligne, le rond est à droite.",
+  q:"Le <strong>q</strong> : le rond est à gauche, la barre descend sous la ligne."
+};
+
+/* ---------- Questions ---------- */
+const rnd = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const pick = arr => arr[rnd(0, arr.length-1)];
+function newQuestion(){
+  if(queue) return queue.shift();
+  const set = SETS[cfg.set];
+  if(cfg.mode === "mot"){
+    let pool = WORDS.filter(w => set.includes(w.l) && !used.has(w.m + w.l));
+    if(!pool.length){ used.clear(); pool = WORDS.filter(w => set.includes(w.l)); }
+    // équilibre : on choisit d'abord la lettre, puis un mot
+    const l = pick(set); const sub = pool.filter(w => w.l === l);
+    const w = pick(sub.length ? sub : pool);
+    used.add(w.m + w.l);
+    return {type:"mot", w};
+  }
+  const target = pick(set), others = set.filter(x => x !== target);
+  const k = rnd(3,5), letters = Array.from({length:12}, () => pick(others));
+  const pos = [...Array(12).keys()].sort(() => Math.random() - .5).slice(0, k);
+  pos.forEach(i => letters[i] = target);
+  return {type:"chasse", target, letters};
+}
+
+function startGame(list){
+  queue = Array.isArray(list) ? list.map(e => e.q) : null;
+  total = queue ? queue.length : TOTAL;
+  q = 0; results = []; errors = []; used.clear();
+  show("game"); next();
+}
+function dots(){
+  $("#dots").innerHTML = Array.from({length:total}, (_,i) => `<span class="dot ${i < results.length ? "done" : (i === q ? "now" : "")}"></span>`).join("");
+}
+function consigne(){
+  return cur.type === "mot" ? "Quelle lettre manque ?" : `Touche toutes les lettres ${cur.target}.`;
+}
+function next(){
+  if(q >= total) return finish();
+  cur = newQuestion(); locked = false; dots();
+  const set = cur.type === "mot" ? SETS[cfg.set] : SETS[cfg.set];
+  $("#models").innerHTML = cfg.aide ? `<div class="models">${set.map(l => `<figure>${model(l)}${l}</figure>`).join("")}<div class="legend"><span class="lb">la barre</span><br><span class="lo">le rond</span></div></div>` : "";
+  if(cur.type === "mot"){
+    $("#qText").textContent = consigne();
+    const w = cur.w;
+    $("#board").innerHTML = `<div class="card"><button class="emo" id="emo" aria-label="Écouter le mot">${w.e}</button>
+      <div class="word">${w.m.replace("_", '<span class="blank" id="blank">&nbsp;</span>')}</div></div>
+      <div class="letters" style="grid-template-columns:repeat(${set.length},1fr)">${set.map(l => `<button class="lt" data-l="${l}">${l}</button>`).join("")}</div>`;
+    $("#emo").onclick = () => speak(w.mot, true);
+    speak(q === 0 ? `Quelle lettre manque ? ${w.mot}` : w.mot);
+  } else {
+    $("#qText").innerHTML = `Touche toutes les lettres <span class="target">${cur.target}</span>`;
+    $("#board").innerHTML = `<div class="grid">${cur.letters.map((l,i) => `<button class="cell" data-i="${i}" aria-pressed="false">${l}</button>`).join("")}</div>
+      <button class="go finish" id="finish">J'ai fini ✓</button>`;
+    $("#finish").onclick = finishRound;
+    speak(`Touche toutes les lettres ${cur.target}`);
+  }
+}
+
+// Pas de correction pendant la partie : on enregistre et on passe à la suite.
+function record(ok, err){
+  locked = true;
+  results.push(ok);
+  if(!ok) errors.push(Object.assign({q:cur}, err));
+  q++; dots();
+  setTimeout(next, 250);
+}
+$("#board").onclick = e => {
+  if(locked) return;
+  const lt = e.target.closest(".lt");
+  if(lt){
+    lt.classList.add("picked");
+    const b = $("#blank"); b.textContent = lt.dataset.l; b.classList.add("filled");
+    record(lt.dataset.l === cur.w.l, {choix: lt.dataset.l});
+    return;
+  }
+  const c = e.target.closest(".cell");
+  if(c){ const on = !c.classList.contains("sel"); c.classList.toggle("sel", on); c.setAttribute("aria-pressed", on); }
+};
+function finishRound(){
+  if(locked) return;
+  const sel = [...document.querySelectorAll(".cell.sel")].map(c => +c.dataset.i);
+  const ok = cur.letters.every((l,i) => (l === cur.target) === sel.includes(i));
+  record(ok, {sel});
+}
+
+/* ---------- Fin de partie ---------- */
+function confusions(){
+  const pairs = [];
+  errors.forEach(e => {
+    if(e.q.type === "mot") pairs.push([e.choix, e.q.w.l]);
+    else e.sel.forEach(i => { if(e.q.letters[i] !== e.q.target) pairs.push([e.q.letters[i], e.q.target]); });
+  });
+  return pairs;
+}
+function conseil(){
+  const pairs = confusions(), has = (a,b) => pairs.some(([x,y]) => (x===a&&y===b)||(x===b&&y===a));
+  const t = [];
+  if(has("b","d") || has("p","q") || has("b","q") || has("d","p"))
+    t.push("Regarde de quel côté est le <strong>rond</strong> : à droite pour b et p, à gauche pour d et q.");
+  if(has("b","d"))
+    t.push("Astuce des mains : fais deux poings devant toi, pouces levés, doigts tournés vers toi. La main gauche fait un <strong>b</strong>, la main droite fait un <strong>d</strong>.");
+  if(has("b","p") || has("d","q") || has("b","q") || has("d","p"))
+    t.push("Regarde la <strong>barre</strong> : elle monte vers le ciel pour b et d, elle descend sous la ligne pour p et q.");
+  if(errors.some(e => e.q.type === "chasse" && e.q.letters.some((l,i) => l === e.q.target && !e.sel.includes(i))))
+    t.push("Prends ton temps : regarde les lettres une par une, de gauche à droite, ligne par ligne.");
+  return t.length ? `<div class="tip"><strong>Pour progresser :</strong>${t.map(x => `<p>${x}</p>`).join("")}</div>` : "";
+}
+const pos = (w) => { const i = w.m.indexOf("_"); return i === 0 ? "au début de" : i === w.m.length-1 ? "à la fin de" : "dans"; };
+function errorCard(e){
+  if(e.q.type === "mot"){
+    const w = e.q.w;
+    const mot = w.m.replace("_", `<span class="ok">${w.l}</span>`);
+    const son = w.l === "q" ? `Dans « ${w.mot} », le son [k] s'écrit avec la lettre <span class="ok">q</span>.`
+                            : `On entend [${w.l}] ${pos(w)} « ${w.mot} » : c'est la lettre <span class="ok">${w.l}</span>.`;
+    return `<div class="err"><div class="head"><span class="e">${w.e}</span><span>${mot}</span></div>
+      Tu as choisi <span class="no">${e.choix}</span>. ${son}
+      <div class="cmp"><figure class="bad">${model(e.choix)}${e.choix}</figure><figure class="good">${model(w.l)}${w.l}</figure></div>
+      ${TIP[w.l]}</div>`;
+  }
+  const {letters, target} = e.q;
+  const nb = letters.filter(l => l === target).length;
+  const miss = letters.filter((l,i) => l === target && !e.sel.includes(i)).length;
+  const wrong = e.sel.filter(i => letters[i] !== target).length;
+  const cells = letters.map((l,i) => {
+    const s = e.sel.includes(i);
+    const c = l === target ? (s ? "found" : "miss") : (s ? "wrong" : "");
+    return `<span class="${c}">${l}</span>`;
+  }).join("");
+  const txt = [];
+  if(miss) txt.push(`Tu as oublié ${miss} lettre${miss>1?"s":""} <span class="ok">${target}</span> (en orange).`);
+  if(wrong) txt.push(`Tu as touché ${wrong} lettre${wrong>1?"s":""} qui n'${wrong>1?"étaient":"était"} pas des ${target} (en rouge).`);
+  return `<div class="err"><div class="head">Les lettres <span class="ok">${target}</span></div>
+    Il y avait ${nb} lettres ${target}. ${txt.join(" ")}
+    <div class="mini">${cells}</div>
+    <div class="cmp"><figure class="good">${model(target)}${target}</figure></div>${TIP[target]}</div>`;
+}
+
+function finish(){
+  const n = results.filter(Boolean).length, ratio = n / total;
+  const title = ratio === 1 ? "Parfait !" : ratio >= .8 ? "Très bien !" : ratio >= .5 ? "Bien, continue !" : "On s'entraîne encore !";
+  $("#noteN").textContent = n; $("#noteT").textContent = total; $("#endTitle").textContent = title;
+  let txt = "";
+  if(queue) txt = `Tu as corrigé ${n} erreur${n>1?"s":""} sur ${total}.`;
+  else if(window.Cartable){
+    const r = Cartable.enregistrer(`${ID}-${cfg.mode}-${cfg.set}`, n, TOTAL); // une note par jeu et par niveau
+    if(r.precedente !== null)
+      txt = n > r.precedente ? `Tu progresses : ${r.precedente} / ${TOTAL} la dernière fois.`
+          : n === r.precedente ? `Comme la dernière fois (${r.precedente} / ${TOTAL}).`
+          : `La dernière fois : ${r.precedente} / ${TOTAL}. Tu vas y arriver !`;
+  }
+  $("#endText").textContent = txt;
+  if(errors.length){
+    $("#review").innerHTML = `<h3>Tes erreurs</h3>` + errors.map(errorCard).join("") + conseil();
+    $("#redo").style.display = ""; $("#again").className = "ghost";
+  } else {
+    $("#review").innerHTML = `<p class="perfect">Aucune erreur, bravo ! 🎉</p>`;
+    $("#redo").style.display = "none"; $("#again").className = "go";
+  }
+  show("end");
+  speak(`${title} ${n} sur ${total}.${errors.length ? " Regarde tes erreurs pour progresser." : ""}`);
+}
+
+$("#start").onclick = () => startGame();
+$("#again").onclick = () => startGame();
+$("#redo").onclick = () => startGame(errors);
+$("#menu").onclick = () => { paintHome(); show("home"); };
+$("#back").onclick = () => { if("speechSynthesis" in window) speechSynthesis.cancel(); paintHome(); show("home"); };
+$("#say").onclick = () => speak(cur && cur.type === "mot" ? `Quelle lettre manque ? ${cur.w.mot}` : consigne(), true);
+</script>
+</body>
+</html>
